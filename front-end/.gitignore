@@ -33,6 +33,11 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Generated plugin registrants
+**/generated_plugin_registrant.dart
+**/generated_plugins.cmake
+**/generated_plugins.cc
+
 # Symbolication related
 app.*.symbols
 
@@ -43,3 +48,14 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/app/generated/
+
+# IDE / Editor
+.idea/
+.vscode/
+
+# Logs / temp
+*.log
+*.tmp
+*.swp
+.DS_Store
