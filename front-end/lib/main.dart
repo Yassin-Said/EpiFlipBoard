@@ -4,8 +4,17 @@ import 'pages/subscribe_page.dart';
 import 'pages/explore_page.dart';
 import 'pages/notification_page.dart';
 import 'pages/profile_page.dart';
+import 'package:device_preview/device_preview.dart';
 
-void main() => runApp(const MyApp());
+void main() => runApp(
+  DevicePreview(
+    builder: (context) => MyApp(), // Wrap your app
+  ),
+);
+
+// void main() {
+//   runApp(const MyApp());
+// }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
