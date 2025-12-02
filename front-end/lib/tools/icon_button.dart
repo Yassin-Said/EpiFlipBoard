@@ -1,0 +1,20 @@
+import 'package:flutter/material.dart';
+
+class UniversalButton extends StatelessWidget {
+    final IconData icon;
+    final VoidCallback onPressed;
+
+    const UniversalButton({
+        super.key,
+        required this.icon,
+        required this.onPressed,
+    });
+
+    @override
+    Widget build(BuildContext context) {
+            return IconButton(
+                icon: Icon(icon, size: 30),
+                onPressed: onPressed,
+        );
+    }
+}
