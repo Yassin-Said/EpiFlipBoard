@@ -5,6 +5,7 @@ import 'pages/explore_page.dart';
 import 'pages/notification_page.dart';
 import 'pages/profile_page.dart';
 import 'package:device_preview/device_preview.dart';
+import 'pages/feed_page.dart';
 
 void main() => runApp(
   DevicePreview(
@@ -40,6 +41,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
   final List<Widget> _pages = [
     HomePage(),
+    FeedPage(),
     SubscribePage(),
     ExplorePage(),
     NotificationPage(),
@@ -73,3 +75,21 @@ class _MainNavigationState extends State<MainNavigation> {
     );
   }
 }
+
+// @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       // home: const MainNavigation(),
+//       debugShowCheckedModeBanner: false,
+//       theme: ThemeData(
+//         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)
+//       ),
+//       routes: {
+//         '/': (context) => const HomePage(),
+//         '/profile': (context) => const ProfilePage(),
+//         '/subscribe': (context) => const SubscribePage(),
+//         '/explore': (context) => const ExplorePage(),
+//         '/notifications': (context) => const NotificationPage()
+//       },
+//     );
+//   }
