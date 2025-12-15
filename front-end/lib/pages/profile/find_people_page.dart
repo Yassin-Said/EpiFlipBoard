@@ -1,7 +1,71 @@
 import 'package:flutter/material.dart';
+import '../../models/person.dart';
 
-class FindPeoplePage extends StatelessWidget {
-  const FindPeoplePage({super.key});
+class FindPeoplePage extends StatefulWidget {
+  final List<Person>? people; // Optionnel, si null on utilise des données d'exemple
+
+  const FindPeoplePage({super.key, this.people});
+
+  @override
+  State<FindPeoplePage> createState() => _FindPeoplePageState();
+}
+
+class _FindPeoplePageState extends State<FindPeoplePage> {
+  late List<Person> _people;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _people = widget.people ?? _getDefaultPeople();
+  }
+
+  // Données par défaut si aucune liste n'est fournie
+  List<Person> _getDefaultPeople() {
+    return [
+      Person(
+        name: "Marshall Moore",
+        description: "Broadcaster and Producer, Financial and Business Reporter/Consultant",
+        verified: false,
+      ),
+      Person(
+        name: "Noah Mittman",
+        description: "Survivor of the era of Internet Optimism. UXD, IxD, ex-Dev, comics & gaming enthusiast.",
+        verified: true,
+      ),
+      Person(
+        name: "SC",
+        description: "Dive into More.Magazine for the latest tech updates.",
+        verified: false,
+      ),
+    ];
+  }
+
+  // Fonction pour charger depuis une API
+  Future<void> loadFromApi() async {
+    setState(() => _isLoading = true);
+    
+    // Simule un appel API
+    await Future.delayed(const Duration(seconds: 2));
+    
+    // Exemple : ici tu ferais ton appel API réel
+    // final response = await http.get('https://ton-api.com/people');
+    // final data = jsonDecode(response.body);
+    // setState(() {
+    //   _people = (data as List).map((json) => Person.fromJson(json)).toList();
+    // });
+    
+    setState(() => _isLoading = false);
+  }
+
+  void _toggleFollow(int index) {
+    setState(() {
+      _people[index].isFollowing = !_people[index].isFollowing;
+    });
+    
+    // Ici tu pourrais appeler ton API pour suivre/ne plus suivre
+    // await api.followPerson(_people[index].name);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +86,12 @@ class FindPeoplePage extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: loadFromApi,
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -51,64 +121,33 @@ class FindPeoplePage extends StatelessWidget {
               ],
             ),
           ),
-          
-          // Liste de personnes
+
+          // Liste
           Expanded(
-            child: ListView(
-              children: [
-                _buildPersonItem(
-                  name: "Marshall Moore",
-                  description: "Broadcaster and Producer, Financial and Business Reporter/Consultant",
-                  verified: false,
-                ),
-                _buildPersonItem(
-                  name: "Noah Mittman",
-                  description: "Survivor of the era of Internet Optimism. UXD, IxD, ex-Dev, comics & gaming enthusiast. I buy a hotdog stand if I'm tryna be frank",
-                  verified: true,
-                ),
-                _buildPersonItem(
-                  name: "SC",
-                  description: "Dive into More.Magazine for the latest tech updates.",
-                  verified: false,
-                ),
-                _buildPersonItem(
-                  name: "Joe Ortiz",
-                  description: "Into IT/Marketing, a Culture Vulture by heart and a one-part geek in all-rounders\n\nOther Platforms: http://joeo.bio.link/",
-                  verified: false,
-                ),
-                _buildPersonItem(
-                  name: "León Krauze",
-                  description: "Journalist. Anchor. @NU34LA. Also on @thisisfusion , @Letras_Libres , @El_Universal_Mx and some other places here and there. Also: Sleep deprived father, tomato grower, pinot obsessive and huge soccer nut.",
-                  verified: false,
-                ),
-                _buildPersonItem(
-                  name: "Cohl Media",
-                  description: "Smart media • curated to inspire.",
-                  verified: false,
-                ),
-                _buildPersonItem(
-                  name: "Fareed Zakaria",
-                  description: "Editor at TIME. Host of CNN's GPS: Sunday. Blogger at CNN.com/GPS",
-                  verified: true,
-                ),
-                _buildPersonItem(
-                  name: "Market Gladiators",
-                  description: "Conquering the Competition.",
-                  verified: false,
-                ),
-              ],
-            ),
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(color: Colors.red),
+                  )
+                : _people.isEmpty
+                    ? const Center(
+                        child: Text(
+                          "No people to show",
+                          style: TextStyle(color: Colors.white60),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: _people.length,
+                        itemBuilder: (context, index) {
+                          return _buildPersonItem(_people[index], index);
+                        },
+                      ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPersonItem({
-    required String name,
-    required String description,
-    required bool verified,
-  }) {
+  Widget _buildPersonItem(Person person, int index) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: const BoxDecoration(
@@ -122,14 +161,19 @@ class FindPeoplePage extends StatelessWidget {
           CircleAvatar(
             radius: 28,
             backgroundColor: Colors.grey[800],
-            child: Text(
-              name[0],
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            backgroundImage: person.avatarUrl != null
+                ? NetworkImage(person.avatarUrl!)
+                : null,
+            child: person.avatarUrl == null
+                ? Text(
+                    person.name[0],
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  )
+                : null,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -138,15 +182,17 @@ class FindPeoplePage extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
+                    Flexible(
+                      child: Text(
+                        person.name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                    if (verified) ...[
+                    if (person.verified) ...[
                       const SizedBox(width: 6),
                       const Icon(Icons.verified, color: Colors.red, size: 18),
                     ],
@@ -154,7 +200,7 @@ class FindPeoplePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  description,
+                  person.description,
                   style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 14,
@@ -166,18 +212,18 @@ class FindPeoplePage extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () => _toggleFollow(index),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: person.isFollowing ? Colors.grey[800] : Colors.red,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
-            child: const Text(
-              "Follow",
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+            child: Text(
+              person.isFollowing ? "Following" : "Follow",
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
             ),
           ),
         ],
