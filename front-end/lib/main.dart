@@ -1,21 +1,16 @@
 import 'package:flutter/material.dart';
-import 'pages/home_page.dart';
-import 'pages/subscribe_page.dart';
+import 'pages/feed_page.dart';
+import 'pages/following_page.dart';
 import 'pages/explore_page.dart';
 import 'pages/notification_page.dart';
 import 'pages/profile_page.dart';
 import 'package:device_preview/device_preview.dart';
-import 'pages/feed_page.dart';
 
 void main() => runApp(
   DevicePreview(
-    builder: (context) => MyApp(), // Wrap your app
+    builder: (context) => const MyApp(),
   ),
 );
-
-// void main() {
-//   runApp(const MyApp());
-// }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -23,8 +18,22 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: const MainNavigation(),
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        primaryColor: Colors.red,
+        scaffoldBackgroundColor: Colors.black,
+      ),
+      // Route initiale = FeedPage
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const MainNavigation(),
+        '/feed': (context) => const FeedPage(),
+        '/following': (context) => const FollowingPage(),
+        '/explore': (context) => const ExplorePage(),
+        '/notifications': (context) => const NotificationPage(),
+        '/profile': (context) => const ProfilePage(),
+      },
     );
   }
 }
@@ -39,13 +48,13 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
 
+  // Les pages principales avec la bottom bar
   final List<Widget> _pages = [
-    HomePage(),
-    FeedPage(),
-    SubscribePage(),
-    ExplorePage(),
-    NotificationPage(),
-    ProfilePage(),
+    const FeedPage(),        // Index 0 = Page d'accueil (Feed)
+    const FollowingPage(),   // Index 1
+    const ExplorePage(),     // Index 2
+    const NotificationPage(),// Index 3
+    const ProfilePage(),     // Index 4
   ];
 
   void _onItemTapped(int index) {
@@ -57,39 +66,42 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _pages,
+      ),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: Colors.black,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: "Subscription"),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: "Explore"),
-          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: "Notifications"),
-          BottomNavigationBarItem(icon: Icon(Icons.account_circle), label: "Profile"),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: "Feedpage",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.grid_view),
+            label: "Following",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: "Explore",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notifications),
+            label: "Notifications",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_circle),
+            label: "Profile",
+          ),
         ],
         currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        showSelectedLabels: false,
         selectedItemColor: Colors.red,
-        unselectedItemColor: Colors.black,
+        unselectedItemColor: Colors.white60,
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
+        onTap: _onItemTapped,
       ),
     );
   }
 }
-
-// @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       // home: const MainNavigation(),
-//       debugShowCheckedModeBanner: false,
-//       theme: ThemeData(
-//         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple)
-//       ),
-//       routes: {
-//         '/': (context) => const HomePage(),
-//         '/profile': (context) => const ProfilePage(),
-//         '/subscribe': (context) => const SubscribePage(),
-//         '/explore': (context) => const ExplorePage(),
-//         '/notifications': (context) => const NotificationPage()
-//       },
-//     );
-//   }

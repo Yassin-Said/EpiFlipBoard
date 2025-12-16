@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'dart:math' as math;
-import 'package:epiflipboard/models/posts.dart';
+import 'package:epiflipboard/models/post.dart';
 import 'package:epiflipboard/tools/flip_widget.dart';
 
 // ============================================
 // PAGE FEED PRINCIPALE
 // ============================================
 class FeedPage extends StatefulWidget {
-  final List<Post>? posts; // Optionnel, si null on utilise des données d'exemple
+  final List<Post>? posts;
 
   const FeedPage({super.key, this.posts});
 
@@ -21,7 +19,6 @@ class _FeedPageState extends State<FeedPage> with TickerProviderStateMixin {
   late List<Post> _posts;
   int _currentPage = 0;
   
-  // Catégories
   final List<String> _categories = [
     "FOR YOU",
     "DAILY EDITION",
@@ -50,63 +47,73 @@ class _FeedPageState extends State<FeedPage> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  // Posts par défaut
   List<Post> _getDefaultPosts() {
     return [
+      Post(
+        title: "Nobody Actually Dies From Old Age? Autopsy Studies Reveal What Really Kills Us",
+        source: "studyfinds.org",
+        category: "LIFE SCIENCES",
+        timeAgo: "15h",
+        imageUrl: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=800",
+        description: "The 'Hallmarks of Aging' Framework Has A Major Problem That Nobody Talked About Until Now In A Nutshell Nobody dies of \"old age\": Autopsy studies across species reveal that specific diseases (heart...",
+        likes: 41,
+        comments: 1,
+        flips: 108,
+        authorName: "Donnie",
+        authorAvatar: null,
+      ),
+      Post(
+        title: "Maison bois livrée et montée",
+        source: "Greenkub",
+        category: "Advertisement",
+        timeAgo: "Sponsored",
+        imageUrl: "https://images.unsplash.com/photo-1518780664697-55e3ad937233?w=800",
+        description: "Maison en bois livrée et montée par nos experts, sans surcoûts cachés.",
+        likes: 0,
+        comments: 0,
+        flips: 0,
+        authorName: "Greenkub",
+        authorAvatar: null,
+        isAd: true,
+      ),
       Post(
         title: "The 50 Best Albums of 2025: Staff Picks",
         source: "billboard.com",
         category: "Music",
         timeAgo: "4d",
-        imageUrl: "https://via.placeholder.com/600x400/FF6B9D/FFFFFF?text=Albums+2025",
+        imageUrl: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800",
         description: "Our staff's favorite albums from the year that was. Eric Church, Evangeline vs. The Machine Eric Church...",
         likes: 32,
         comments: 1,
         flips: 72,
-      ),
-      Post(
-        title: "Voici les cadeaux les plus tendance sur toutes les listes de vœux en...",
-        source: "Tech Gadget Trend",
-        category: "Tech",
-        timeAgo: "2h",
-        imageUrl: "https://via.placeholder.com/600x400/4A90E2/FFFFFF?text=Tech+Gadgets",
-        description: "Les meilleurs gadgets technologiques de la saison.",
-        likes: 156,
-        comments: 23,
-        flips: 89,
+        authorName: "Flipboard",
+        authorAvatar: null,
       ),
       Post(
         title: "Very, Very Unmerry",
         source: "Yahoo Lifestyle",
         category: "Lifestyle",
         timeAgo: "1d",
-        imageUrl: "https://via.placeholder.com/600x400/7ED321/FFFFFF?text=Holiday+Stories",
+        imageUrl: "https://images.unsplash.com/photo-1512909006721-3d6018887383?w=800",
         description: "A collection of holiday stories that didn't go as planned.",
         likes: 245,
         comments: 45,
         flips: 123,
-      ),
-      Post(
-        title: "Yes, Chrismukkah Is Real—Here's What to Know",
-        source: "rd.com",
-        category: "Culture",
-        timeAgo: "3d",
-        imageUrl: "https://via.placeholder.com/600x400/F5A623/FFFFFF?text=Chrismukkah",
-        description: "The celebration that combines Christmas and Hanukkah traditions.",
-        likes: 89,
-        comments: 12,
-        flips: 56,
+        authorName: "Yahoo Lifestyle",
+        authorAvatar: null,
       ),
       Post(
         title: "The 50 greatest innovations of 2025",
         source: "Popular Science",
         category: "Science",
         timeAgo: "3d",
-        imageUrl: "https://via.placeholder.com/600x400/9013FE/FFFFFF?text=Innovations",
+        imageUrl: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=800",
         description: "From AI breakthroughs to sustainable tech, the innovations that shaped 2025.",
         likes: 456,
         comments: 78,
         flips: 234,
+        authorName: "Popular Science",
+        authorAvatar: null,
       ),
     ];
   }
@@ -117,9 +124,6 @@ class _FeedPageState extends State<FeedPage> with TickerProviderStateMixin {
       _currentPage = 0;
     });
     _pageController.jumpToPage(0);
-    
-    // Ici tu pourras charger les posts de la catégorie depuis ton API
-    // await loadPostsByCategory(_categories[index]);
   }
 
   @override
@@ -129,10 +133,7 @@ class _FeedPageState extends State<FeedPage> with TickerProviderStateMixin {
       body: SafeArea(
         child: Column(
           children: [
-            // Header avec catégories
             _buildHeader(),
-            
-            // Feed avec effet flip
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
@@ -143,7 +144,7 @@ class _FeedPageState extends State<FeedPage> with TickerProviderStateMixin {
                     post: _posts[index],
                     pageController: _pageController,
                     currentIndex: index,
-                    currentPage: _pageController.page ?? 0,
+                    currentPage: _currentPage.toDouble(),
                   );
                 },
               ),
@@ -159,7 +160,6 @@ class _FeedPageState extends State<FeedPage> with TickerProviderStateMixin {
       color: Colors.black,
       child: Column(
         children: [
-          // Barre de navigation avec catégories
           SizedBox(
             height: 60,
             child: Row(
@@ -199,8 +199,6 @@ class _FeedPageState extends State<FeedPage> with TickerProviderStateMixin {
               ],
             ),
           ),
-          
-          // Indicateur de catégorie sélectionnée
           Container(
             height: 3,
             alignment: Alignment.centerLeft,

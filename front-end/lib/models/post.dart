@@ -8,6 +8,9 @@ class Post {
   final int likes;
   final int comments;
   final int flips;
+  final String? authorName;
+  final String? authorAvatar;
+  final bool isAd;
 
   Post({
     required this.title,
@@ -19,9 +22,11 @@ class Post {
     this.likes = 0,
     this.comments = 0,
     this.flips = 0,
+    this.authorName,
+    this.authorAvatar,
+    this.isAd = false,
   });
 
-  // Factory pour créer depuis JSON (API)
   factory Post.fromJson(Map<String, dynamic> json) {
     return Post(
       title: json['title'] ?? '',
@@ -33,6 +38,9 @@ class Post {
       likes: json['likes'] ?? 0,
       comments: json['comments'] ?? 0,
       flips: json['flips'] ?? 0,
+      authorName: json['authorName'],
+      authorAvatar: json['authorAvatar'],
+      isAd: json['isAd'] ?? false,
     );
   }
 }
