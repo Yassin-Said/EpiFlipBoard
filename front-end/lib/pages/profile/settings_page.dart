@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/setting_item.dart';
+import 'package:epiflipboard/pages/profile/connexion/auth_selection_page.dart';
 
 class SettingsPage extends StatefulWidget {
   final List<SettingItem>? customSettings; // Optionnel, si null on utilise les paramètres par défaut
@@ -28,12 +29,26 @@ class _SettingsPageState extends State<SettingsPage> {
       SettingItem.simple(
         title: "Sign up",
         subtitle: "for a new account",
-        onTap: () => print("Sign up"),
+        onTap: () => {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AuthSelectionPage(isSignUp: true),
+            ),
+          ),
+        },
       ),
       SettingItem.simple(
         title: "Log in",
         subtitle: "to your existing account",
-        onTap: () => print("Log in"),
+        onTap: () => {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AuthSelectionPage(isSignUp: false),
+            ),
+          )
+        },
       ),
       SettingItem.simple(
         title: "Erase all content and settings",
