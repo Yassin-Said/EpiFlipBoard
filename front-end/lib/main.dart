@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const MainNavigation(),
-        '/feed': (context) => const FeedPage(),
+        '/feed': (context) => const ForYouPage(),
         '/following': (context) => const FollowingPage(),
         '/explore': (context) => const ExplorePage(),
         '/notifications': (context) => const NotificationPage(),
@@ -50,7 +50,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
   // Les pages principales avec la bottom bar
   final List<Widget> _pages = [
-    const FeedPage(),        // Index 0 = Page d'accueil (Feed)
+    const ForYouPage(),        // Index 0 = Page d'accueil (Feed)
     const FollowingPage(),   // Index 1
     const ExplorePage(),     // Index 2
     const NotificationPage(),// Index 3
