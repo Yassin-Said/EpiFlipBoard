@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:epiflipboard/models/post.dart';
 import 'package:epiflipboard/models/article.dart';
 import 'package:epiflipboard/models/topic_categorie.dart';
-// import 'package:epiflipboard/tools/flip_widget.dart';
 
-// ============================================
-// PAGE PRINCIPALE FOR YOU
-// ============================================
 class ForYouPage extends StatefulWidget {
   final Map<String, List<FeaturedArticle>>? featuredByCategory;
   final Map<String, List<DetailedPost>>? postsByCategory;
@@ -24,6 +20,7 @@ class ForYouPage extends StatefulWidget {
 }
 
 class _ForYouPageState extends State<ForYouPage> {
+  late final PageController _forYouPageController;
   final List<String> _categories = [
     "FOR YOU",
     "DAILY EDITION",
@@ -35,6 +32,9 @@ class _ForYouPageState extends State<ForYouPage> {
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _categoryScrollController = ScrollController();
+  
+  // AJOUT : Variable pour tracker la page actuelle
+  double _currentPageValue = 0.0;
 
   late Map<String, List<FeaturedArticle>> _featuredArticles;
   late Map<String, List<DetailedPost>> _detailedPosts;
@@ -43,6 +43,15 @@ class _ForYouPageState extends State<ForYouPage> {
   @override
   void initState() {
     super.initState();
+    _forYouPageController = PageController();
+    
+    // AJOUT : Listener pour mettre à jour la page actuelle
+    _forYouPageController.addListener(() {
+      setState(() {
+        _currentPageValue = _forYouPageController.page ?? 0.0;
+      });
+    });
+    
     _featuredArticles = widget.featuredByCategory ?? _getDefaultFeatured();
     _detailedPosts = widget.postsByCategory ?? _getDefaultPosts();
     _topics = widget.topics ?? _getDefaultTopics();
@@ -50,6 +59,7 @@ class _ForYouPageState extends State<ForYouPage> {
 
   @override
   void dispose() {
+    _forYouPageController.dispose();
     _searchController.dispose();
     _categoryScrollController.dispose();
     super.dispose();
@@ -57,23 +67,6 @@ class _ForYouPageState extends State<ForYouPage> {
 
   Map<String, List<FeaturedArticle>> _getDefaultFeatured() {
     return {
-      "FOR YOU": [
-        FeaturedArticle(
-          title: "\"They are much more challenging animals.\" What is a wolf-dog and how are they different to domestic dogs?",
-          source: "discoverwildlife.com",
-          imageUrl: "https://images.unsplash.com/photo-1589656966895-2f33e7653819?w=800&h=600&fit=crop",
-        ),
-        FeaturedArticle(
-          title: "The internet's biggest food myths debunked",
-          source: "The Independent",
-          imageUrl: "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&h=600&fit=crop",
-        ),
-        FeaturedArticle(
-          title: "My ultimate Windows keyboard shortcuts guide",
-          source: "ZDNET",
-          imageUrl: "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&h=600&fit=crop",
-        ),
-      ],
       "DAILY EDITION": [
         FeaturedArticle(
           title: "Jerome Powell to attend Supreme Court arguments in case on Trump",
@@ -151,6 +144,15 @@ class _ForYouPageState extends State<ForYouPage> {
   }
 
   void _changeCategory(int index) {
+    if (_selectedCategory == index && _categories[index] == "FOR YOU") {
+      _forYouPageController.animateToPage(
+        0,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+      return;
+    }
+
     setState(() {
       _selectedCategory = index;
     });
@@ -189,7 +191,6 @@ class _ForYouPageState extends State<ForYouPage> {
       color: Colors.black,
       child: Column(
         children: [
-          // Barre de recherche ou catégories
           if (_isSearching)
             Container(
               padding: const EdgeInsets.all(16),
@@ -276,15 +277,32 @@ class _ForYouPageState extends State<ForYouPage> {
       return _buildTopicsView();
     }
 
-    final featured = _featuredArticles[category] ?? [];
     final posts = _detailedPosts[category] ?? [];
+
+    if (category == "FOR YOU") {
+      return PageView.builder(
+        controller: _forYouPageController,
+        scrollDirection: Axis.vertical,
+        itemCount: posts.length,
+        itemBuilder: (context, index) {
+          return _FlipPostCard(
+            post: posts[index],
+            currentIndex: index,
+            currentPage: _currentPageValue, // MODIFIÉ : on passe la valeur trackée
+          );
+        },
+      );
+    }
+
+    final featured = _featuredArticles[category] ?? [];
 
     return ListView(
       children: [
-        // Featured articles (couvertures)
         if (featured.isNotEmpty) ...[
           const SizedBox(height: 16),
-          ...featured.map((article) => _buildFeaturedCard(article, category, posts)),
+          ...featured.map(
+            (article) => _buildFeaturedCard(article, category, posts),
+          ),
         ],
       ],
     );
@@ -293,7 +311,6 @@ class _ForYouPageState extends State<ForYouPage> {
   Widget _buildFeaturedCard(FeaturedArticle article, String category, List<DetailedPost> posts) {
     return GestureDetector(
       onTap: () {
-        // Navigation vers la vue détaillée avec effet flip
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -440,17 +457,16 @@ class DetailedPostsView extends StatefulWidget {
 
 class _DetailedPostsViewState extends State<DetailedPostsView> {
   late PageController _pageController;
-  int _currentPage = 0;
+  double _currentPage = 0.0;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
     _pageController.addListener(() {
-      final page = _pageController.page?.round() ?? 0;
-      if (_currentPage != page) {
-        setState(() => _currentPage = page);
-      }
+      setState(() {
+        _currentPage = _pageController.page ?? 0.0;
+      });
     });
   }
 
@@ -465,55 +481,17 @@ class _DetailedPostsViewState extends State<DetailedPostsView> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Container(
-              height: 56,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  Expanded(
-                    child: Text(
-                      widget.category,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.more_vert, color: Colors.white),
-                    onPressed: () {},
-                  ),
-                ],
-              ),
-            ),
-
-            // Posts avec effet flip
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                scrollDirection: Axis.vertical,
-                itemCount: widget.posts.length,
-                itemBuilder: (context, index) {
-                  return _FlipPostCard(
-                    post: widget.posts[index],
-                    pageController: _pageController,
-                    currentIndex: index,
-                    currentPage: _currentPage.toDouble(),
-                  );
-                },
-              ),
-            ),
-          ],
+        child: PageView.builder(
+          controller: _pageController,
+          scrollDirection: Axis.vertical,
+          itemCount: widget.posts.length,
+          itemBuilder: (context, index) {
+            return _FlipPostCard(
+              post: widget.posts[index],
+              currentIndex: index,
+              currentPage: _currentPage,
+            );
+          },
         ),
       ),
     );
@@ -525,27 +503,27 @@ class _DetailedPostsViewState extends State<DetailedPostsView> {
 // ============================================
 class _FlipPostCard extends StatelessWidget {
   final DetailedPost post;
-  final PageController pageController;
   final int currentIndex;
   final double currentPage;
 
   const _FlipPostCard({
     required this.post,
-    required this.pageController,
     required this.currentIndex,
     required this.currentPage,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Calcul de la différence entre la page actuelle et l'index de cette carte
     final double diff = (currentPage - currentIndex);
+    // Limiter l'angle pour un effet plus contrôlé
     final double angle = diff.clamp(-1.0, 1.0);
 
     return Transform(
       alignment: Alignment.center,
       transform: Matrix4.identity()
-        ..setEntry(3, 2, 0.002)
-        ..rotateX(-angle * 0.5),
+        ..setEntry(3, 2, 0.001) // Perspective
+        ..rotateX(-angle * 0.7), // Rotation sur l'axe X (ajusté à 0.7 pour plus d'effet)
       child: _buildPostContent(context),
     );
   }
@@ -556,7 +534,6 @@ class _FlipPostCard extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // Image de fond
           if (post.imageUrl != null)
             Image.network(
               post.imageUrl!,
@@ -569,7 +546,6 @@ class _FlipPostCard extends StatelessWidget {
               },
             ),
 
-          // Gradient overlay
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -586,7 +562,6 @@ class _FlipPostCard extends StatelessWidget {
             ),
           ),
 
-          // Badge catégorie
           Positioned(
             top: 20,
             left: 20,
@@ -607,7 +582,6 @@ class _FlipPostCard extends StatelessWidget {
             ),
           ),
 
-          // Contenu
           Positioned(
             left: 0,
             right: 0,
