@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:epiflipboard/models/post.dart';
 import 'package:epiflipboard/models/article.dart';
 import 'package:epiflipboard/models/topic_categorie.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ForYouPage extends StatefulWidget {
   final Map<String, List<FeaturedArticle>>? featuredByCategory;
@@ -33,7 +34,6 @@ class _ForYouPageState extends State<ForYouPage> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _categoryScrollController = ScrollController();
   
-  // AJOUT : Variable pour tracker la page actuelle
   double _currentPageValue = 0.0;
 
   late Map<String, List<FeaturedArticle>> _featuredArticles;
@@ -45,7 +45,6 @@ class _ForYouPageState extends State<ForYouPage> {
     super.initState();
     _forYouPageController = PageController();
     
-    // AJOUT : Listener pour mettre à jour la page actuelle
     _forYouPageController.addListener(() {
       setState(() {
         _currentPageValue = _forYouPageController.page ?? 0.0;
@@ -72,11 +71,28 @@ class _ForYouPageState extends State<ForYouPage> {
           title: "Jerome Powell to attend Supreme Court arguments in case on Trump",
           source: "NBC News",
           imageUrl: "https://images.unsplash.com/photo-1589994965851-a8f479c573a9?w=800&h=600&fit=crop",
+          url: "https://www.nbcnews.com",
         ),
         FeaturedArticle(
           title: "100 vehicles pile up in Michigan crash as snowstorm moves across",
           source: "Associated Press",
           imageUrl: "https://images.unsplash.com/photo-1491146179969-d674118945ff?w=800&h=600&fit=crop",
+          url: "https://apnews.com",
+        ),
+        FeaturedArticle(
+          title: "US carries out first known strike on alleged drug boat since Maduro's capture",
+          source: "Associated Press",
+          imageUrl: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop",
+          url: "https://apnews.com",
+          description: "WASHINGTON (AP) — The U.S. military said Friday that it has carried out a deadly strike on a...",
+          timeAgo: "11 hours ago",
+        ),
+        FeaturedArticle(
+          title: "An anti-ICE 'economic blackout' is underway in Minneapolis. What to know",
+          source: "yahoo.com",
+          imageUrl: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop",
+          url: "https://www.yahoo.com",
+          timeAgo: "15 hours ago",
         ),
       ],
       "TRENDING": [
@@ -84,6 +100,7 @@ class _ForYouPageState extends State<ForYouPage> {
           title: "Comfort Food - Foods that will hit the spot",
           source: "Magazine",
           imageUrl: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&h=600&fit=crop",
+          url: "https://www.example.com",
         ),
       ],
     };
@@ -116,8 +133,6 @@ class _ForYouPageState extends State<ForYouPage> {
           flips: 108,
           authorName: "Donnie",
         ),
-      ],
-      "DAILY EDITION": [
         DetailedPost(
           title: "Live. Trump doubles down on Greenland annexation as Europe struggles to coordinate a response",
           source: "Euronews",
@@ -160,11 +175,52 @@ class _ForYouPageState extends State<ForYouPage> {
 
   void _toggleSearch() {
     setState(() {
+      debugPrint("SEARCH → ");
       _isSearching = !_isSearching;
       if (!_isSearching) {
         _searchController.clear();
       }
     });
+  }
+
+  Future<void> _openUrl(String url) async {
+    try {
+      debugPrint("Attempting to open URL: $url");
+      final Uri uri = Uri.parse(url);
+      
+      // Essayer de lancer l'URL
+      final bool launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      
+      if (launched) {
+        debugPrint("✅ URL opened successfully: $url");
+      } else {
+        debugPrint("❌ Failed to open URL: $url");
+        // Afficher un message à l'utilisateur
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Cannot open link: $url"),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("❌ Error opening URL: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: $e"),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -277,6 +333,11 @@ class _ForYouPageState extends State<ForYouPage> {
       return _buildTopicsView();
     }
 
+    // DAILY EDITION : nouvelle vue liste d'articles
+    if (category == "DAILY EDITION") {
+      return _buildDailyEditionView();
+    }
+
     final posts = _detailedPosts[category] ?? [];
 
     if (category == "FOR YOU") {
@@ -288,7 +349,7 @@ class _ForYouPageState extends State<ForYouPage> {
           return _FlipPostCard(
             post: posts[index],
             currentIndex: index,
-            currentPage: _currentPageValue, // MODIFIÉ : on passe la valeur trackée
+            currentPage: _currentPageValue,
           );
         },
       );
@@ -305,6 +366,216 @@ class _ForYouPageState extends State<ForYouPage> {
           ),
         ],
       ],
+    );
+  }
+
+  // NOUVELLE VUE POUR DAILY EDITION
+  Widget _buildDailyEditionView() {
+    final articles = _featuredArticles["DAILY EDITION"] ?? [];
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.all(20),
+          child: Text(
+            "LATEST NEWS",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 0),
+            itemCount: articles.length,
+            separatorBuilder: (context, index) => Container(
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              height: 1,
+              color: Colors.grey[900],
+            ),
+            itemBuilder: (context, index) {
+              return _buildNewsArticleItem(articles[index]);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNewsArticleItem(FeaturedArticle article) {
+    return GestureDetector(
+      onTap: () {
+        if (article.url != null) {
+          _openUrl(article.url!);
+        } else {
+          debugPrint("No URL for article: ${article.title}");
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        color: Colors.black,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image à gauche
+            if (article.imageUrl != null)
+              Container(
+                width: 120,
+                height: 90,
+                margin: const EdgeInsets.only(right: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.grey[900],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Image.network(
+                  article.imageUrl!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.grey[800],
+                      child: const Icon(Icons.broken_image, color: Colors.white30, size: 40),
+                    );
+                  },
+                ),
+              ),
+            
+            // Contenu à droite
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Titre
+                  Text(
+                    article.title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      height: 1.3,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  
+                  const SizedBox(height: 8),
+                  
+                  // Description (si disponible)
+                  if (article.description != null) ...[
+                    Text(
+                      article.description!,
+                      style: const TextStyle(
+                        color: Colors.white60,
+                        fontSize: 14,
+                        height: 1.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                  ],
+                  
+                  // Source et temps
+                  Row(
+                    children: [
+                      // Logo circulaire de la source
+                      Container(
+                        width: 20,
+                        height: 20,
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.red,
+                        ),
+                        child: Center(
+                          child: Text(
+                            article.source[0].toUpperCase(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      
+                      // Nom de la source
+                      Expanded(
+                        child: Text(
+                          article.source,
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      
+                      // Temps (si disponible)
+                      if (article.timeAgo != null) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          article.timeAgo!,
+                          style: const TextStyle(
+                            color: Colors.white60,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 12),
+                  
+                  // Boutons d'action
+                  Row(
+                    children: [
+                      _buildSmallActionButton(Icons.share, () {
+                        debugPrint("SHARE → ${article.title}");
+                      }),
+                      const SizedBox(width: 16),
+                      _buildSmallActionButton(Icons.comment_outlined, () {
+                        debugPrint("COMMENT → ${article.title}");
+                      }),
+                      const SizedBox(width: 16),
+                      _buildSmallActionButton(Icons.add, () {
+                        debugPrint("ADD → ${article.title}");
+                      }),
+                      const SizedBox(width: 16),
+                      _buildSmallActionButton(Icons.favorite_border, () {
+                        debugPrint("LIKE → ${article.title}");
+                      }),
+                      const Spacer(),
+                      _buildSmallActionButton(Icons.more_horiz, () {
+                        debugPrint("MORE → ${article.title}");
+                      }),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSmallActionButton(IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Icon(
+          icon,
+          color: Colors.white60,
+          size: 20,
+        ),
+      ),
     );
   }
 
@@ -514,16 +785,14 @@ class _FlipPostCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Calcul de la différence entre la page actuelle et l'index de cette carte
     final double diff = (currentPage - currentIndex);
-    // Limiter l'angle pour un effet plus contrôlé
     final double angle = diff.clamp(-1.0, 1.0);
 
     return Transform(
       alignment: Alignment.center,
       transform: Matrix4.identity()
-        ..setEntry(3, 2, 0.001) // Perspective
-        ..rotateX(-angle * 0.7), // Rotation sur l'axe X (ajusté à 0.7 pour plus d'effet)
+        ..setEntry(3, 2, 0.001)
+        ..rotateX(-angle * 0.7),
       child: _buildPostContent(context),
     );
   }
