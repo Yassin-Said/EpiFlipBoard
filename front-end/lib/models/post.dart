@@ -1,4 +1,5 @@
-class Post {
+// Modèle pour un post complet
+class DetailedPost {
   final String title;
   final String source;
   final String category;
@@ -9,10 +10,8 @@ class Post {
   final int comments;
   final int flips;
   final String? authorName;
-  final String? authorAvatar;
-  final bool isAd;
 
-  Post({
+  DetailedPost({
     required this.title,
     required this.source,
     required this.category,
@@ -23,12 +22,10 @@ class Post {
     this.comments = 0,
     this.flips = 0,
     this.authorName,
-    this.authorAvatar,
-    this.isAd = false,
   });
 
-  factory Post.fromJson(Map<String, dynamic> json) {
-    return Post(
+  factory DetailedPost.fromJson(Map<String, dynamic> json) {
+    return DetailedPost(
       title: json['title'] ?? '',
       source: json['source'] ?? '',
       category: json['category'] ?? '',
@@ -39,8 +36,6 @@ class Post {
       comments: json['comments'] ?? 0,
       flips: json['flips'] ?? 0,
       authorName: json['authorName'],
-      authorAvatar: json['authorAvatar'],
-      isAd: json['isAd'] ?? false,
     );
   }
 }
