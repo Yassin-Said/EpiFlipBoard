@@ -1,8 +1,14 @@
 from supabase_client import supabase
 
+from pydantic import BaseModel
 from fastapi import APIRouter
 
 router = APIRouter()
+
+class ProfileCreate(BaseModel):
+    username: str
+    avatarUrl: str
+    role: int
 
 @router.get("/profile")
 def get_profile():
@@ -12,6 +18,14 @@ def get_profile():
     except Exception as e:
         return {"error": str(e)}
 
-@router.get("/items/{item_id}")
-def read_item(item_id: int, q: str | None = None):
-    return {"item_id": item_id, "q": q}
+@router.post("/createProfile")
+def create_profile(profile: ProfileCreate):
+    try:
+        data = supabase.table("profiles").insert({
+            "username": profile.username,
+            "avatar_url": profile.avatarUrl,
+            "role_id":profile.role
+        }).execute()
+        return {"success": "Profile created", "data" : data}
+    except Exception as e:
+        return {"error": str(e)}
