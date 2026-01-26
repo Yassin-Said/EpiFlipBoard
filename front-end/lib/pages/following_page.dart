@@ -176,6 +176,7 @@ class _FollowingPageState extends State<FollowingPage> {
           icon: const Icon(Icons.refresh),
           onPressed: () {
             debugPrint("Refresh following");
+            _searchController.clear();
           },
         ),
       ],
