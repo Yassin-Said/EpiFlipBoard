@@ -3,6 +3,9 @@ import 'package:epiflipboard/models/post.dart';
 import 'package:epiflipboard/models/article.dart';
 import 'package:epiflipboard/models/topic_categorie.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:math';
 
 class ForYouPage extends StatefulWidget {
   final Map<String, List<FeaturedArticle>>? featuredByCategory;
@@ -18,6 +21,22 @@ class ForYouPage extends StatefulWidget {
 
   @override
   State<ForYouPage> createState() => _ForYouPageState();
+}
+
+class PostsResponse {
+  final List<DetailedPost> posts;
+  final String? nextCursor;
+
+  PostsResponse({required this.posts, this.nextCursor});
+
+  factory PostsResponse.fromJson(Map<String, dynamic> json) {
+    return PostsResponse(
+      posts: (json["posts"] as List)
+          .map((e) => DetailedPost.fromJson(e))
+          .toList(),
+      nextCursor: json["nextCursor"],
+    );
+  }
 }
 
 class _ForYouPageState extends State<ForYouPage> {
@@ -52,8 +71,23 @@ class _ForYouPageState extends State<ForYouPage> {
     });
     
     _featuredArticles = widget.featuredByCategory ?? _getDefaultFeatured();
+
     _detailedPosts = widget.postsByCategory ?? _getDefaultPosts();
     _topics = widget.topics ?? _getDefaultTopics();
+    _loadPosts();
+  }
+
+  Future<void> _loadPosts() async {
+    try {
+      final postsResponse = await fetchPosts();
+      _detailedPosts = {
+        "posts": postsResponse.posts,
+      };
+    } catch (e) {
+      print("#################");
+      print(e);
+      print("#################");
+    }
   }
 
   @override
@@ -62,6 +96,23 @@ class _ForYouPageState extends State<ForYouPage> {
     _searchController.dispose();
     _categoryScrollController.dispose();
     super.dispose();
+  }
+
+  Future<PostsResponse> fetchPosts({int limit = 10, String? cursor}) async {
+    final uri = Uri.parse("http://127.0.0.1:8000/posts").replace(
+      queryParameters: {
+        "limit": limit.toString(),
+        if (cursor != null) "cursor": cursor,
+      },
+    );
+
+    final response = await http.get(uri);
+
+    if (response.statusCode != 200) {
+      throw Exception("Erreur lors du chargement des posts");
+    }
+
+    return PostsResponse.fromJson(jsonDecode(response.body));
   }
 
   Map<String, List<FeaturedArticle>> _getDefaultFeatured() {
