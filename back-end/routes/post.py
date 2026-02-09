@@ -21,18 +21,45 @@ def get_posts_by_author_id(author_id: str):
 
 @router.get("/posts")
 def get_posts(limit: int = 10, cursor: str | None = None):
-    query = supabase.table("posts") \
-        .select("*") \
-        .order("created_at", desc=True) \
-        .order("id", desc=True) \
+    query = (
+        supabase
+        .table("posts")
+        .select("""
+            id,
+            title,
+            summary,
+            image_url,
+            link,
+            created_at,
+            updated_at,
+            author_id,
+
+            profiles:author_id (
+                id,
+                username,
+                avatar_url
+            ),
+
+            post_liked(count)
+        """)
+        .order("created_at", desc=True)
+        .order("id", desc=True)
         .limit(limit)
+    )
 
     if cursor:
         decoded = json.loads(base64.b64decode(cursor))
-        query = query.lt("created_at", decoded["createdAt"]) \
-                     .or_(f"created_at.eq.{decoded['createdAt']},id.lt.{decoded['id']}")
+        query = (
+            query
+            .lt("created_at", decoded["createdAt"])
+            .or_(f"created_at.eq.{decoded['createdAt']},id.lt.{decoded['id']}")
+        )
 
     data = query.execute().data
+
+    for post in data:
+        post["likes"] = post["post_liked"]["count"] if post.get("post_liked") else 0
+        del post["post_liked"]
 
     next_cursor = None
     if data:
@@ -46,6 +73,7 @@ def get_posts(limit: int = 10, cursor: str | None = None):
         "posts": data,
         "nextCursor": next_cursor
     }
+
 
 @router.post("/createPost")
 def create_post(post: PostCreate):
