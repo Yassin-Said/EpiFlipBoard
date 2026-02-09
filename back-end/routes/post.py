@@ -30,6 +30,7 @@ def get_posts(limit: int = 10, cursor: str | None = None):
             summary,
             image_url,
             link,
+            tags,
             created_at,
             updated_at,
             author_id,
