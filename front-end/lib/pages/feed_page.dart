@@ -3,6 +3,9 @@ import 'package:epiflipboard/models/post.dart';
 import 'package:epiflipboard/models/article.dart';
 import 'package:epiflipboard/models/topic_categorie.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'dart:math';
 
 class ForYouPage extends StatefulWidget {
   final Map<String, List<FeaturedArticle>>? featuredByCategory;
@@ -20,13 +23,26 @@ class ForYouPage extends StatefulWidget {
   State<ForYouPage> createState() => _ForYouPageState();
 }
 
+class PostsResponse {
+  final List<DetailedPost> posts;
+  final String? nextCursor;
+
+  PostsResponse({required this.posts, this.nextCursor});
+
+  factory PostsResponse.fromJson(Map<String, dynamic> json) {
+    return PostsResponse(
+      posts: (json["posts"] as List)
+          .map((e) => DetailedPost.fromJson(e))
+          .toList(),
+      nextCursor: json["nextCursor"],
+    );
+  }
+}
+
 class _ForYouPageState extends State<ForYouPage> {
   late final PageController _forYouPageController;
   final List<String> _categories = [
     "FOR YOU",
-    "DAILY EDITION",
-    "TRENDING",
-    "EXPLORE MORE TOPICS"
   ];
   
   int _selectedCategory = 0;
@@ -34,6 +50,9 @@ class _ForYouPageState extends State<ForYouPage> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _categoryScrollController = ScrollController();
   
+  String? _nextCursor;
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
   double _currentPageValue = 0.0;
 
   late Map<String, List<FeaturedArticle>> _featuredArticles;
@@ -52,8 +71,50 @@ class _ForYouPageState extends State<ForYouPage> {
     });
     
     _featuredArticles = widget.featuredByCategory ?? _getDefaultFeatured();
+
     _detailedPosts = widget.postsByCategory ?? _getDefaultPosts();
     _topics = widget.topics ?? _getDefaultTopics();
+    _loadPosts();
+  }
+
+  Future<void> _loadPosts() async {
+    try {
+      final postsResponse = await fetchPosts();
+
+      if (!mounted) return;
+
+      setState(() {
+        _detailedPosts = {
+          "FOR YOU": postsResponse.posts,
+        };
+        _nextCursor = postsResponse.nextCursor;
+        _hasMore = _nextCursor != null;
+      });
+    } catch (e) {
+      print("loadPosts error: $e");
+    }
+  }
+
+  Future<void> _loadMorePosts() async {
+    if (_isLoadingMore || !_hasMore) return;
+
+    _isLoadingMore = true;
+
+    try {
+      final postsResponse = await fetchPosts(cursor: _nextCursor);
+
+      if (!mounted) return;
+
+      setState(() {
+        _detailedPosts["FOR YOU"]!.addAll(postsResponse.posts);
+        _nextCursor = postsResponse.nextCursor;
+        _hasMore = _nextCursor != null;
+      });
+    } catch (e) {
+      print("loadMorePosts error: $e");
+    } finally {
+      _isLoadingMore = false;
+    }
   }
 
   @override
@@ -63,6 +124,60 @@ class _ForYouPageState extends State<ForYouPage> {
     _categoryScrollController.dispose();
     super.dispose();
   }
+
+  Future<Map<String, int>> fetchPostLikes(List<String> postIds) async {
+    final response = await http.post(
+      Uri.parse("https://epiflipboard-iau1.onrender.com/countPostLikes"),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: jsonEncode({
+        "post_ids": postIds,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception("Erreur lors du chargement des likes");
+    }
+
+    final data = jsonDecode(response.body);
+
+    return Map<String, int>.from(
+      data["data"].map((key, value) => MapEntry(key, value as int)),
+    );
+  }
+
+  Future<PostsResponse> fetchPosts({String? cursor}) async {
+    final uri = Uri.parse(
+      cursor == null
+        ? "https://epiflipboard-iau1.onrender.com/posts"
+        : "https://epiflipboard-iau1.onrender.com/posts?cursor=$cursor",
+    );
+
+    final response = await http.get(uri);
+
+    if (response.statusCode != 200) {
+      throw Exception("Erreur lors du chargement des posts");
+    }
+   final Map<String, dynamic> data = jsonDecode(response.body);
+
+  final posts = (data["posts"] as List)
+      .map((e) => DetailedPost.fromBackendJson(e))
+      .toList();
+
+  final postIds = posts.map((p) => p.id).toList();
+
+  final likesMap = await fetchPostLikes(postIds);
+
+  for (final post in posts) {
+    post.likes = likesMap[post.id] ?? 0;
+  }
+
+  return PostsResponse(
+    posts: posts,
+    nextCursor: data["nextCursor"],
+  );
+}
 
   Map<String, List<FeaturedArticle>> _getDefaultFeatured() {
     return {
@@ -110,6 +225,7 @@ class _ForYouPageState extends State<ForYouPage> {
     return {
       "FOR YOU": [
         DetailedPost(
+          id: "qgueygqs",
           title: "'We got lazy and complacent': Swedish pensioners explain how abolishing the wealth tax changed their country",
           source: "The Conversation UK",
           category: "SOCIAL JUSTICE",
@@ -122,6 +238,7 @@ class _ForYouPageState extends State<ForYouPage> {
           authorName: "Have A Go",
         ),
         DetailedPost(
+          id: "qgueygqs",
           title: "Nobody Actually Dies From Old Age? Autopsy Studies Reveal What Really Kills Us",
           source: "studyfinds.org",
           category: "LIFE SCIENCES",
@@ -134,6 +251,7 @@ class _ForYouPageState extends State<ForYouPage> {
           authorName: "Donnie",
         ),
         DetailedPost(
+          id: "qgueygqs",
           title: "Live. Trump doubles down on Greenland annexation as Europe struggles to coordinate a response",
           source: "Euronews",
           category: "POLITICS",
@@ -346,6 +464,9 @@ class _ForYouPageState extends State<ForYouPage> {
         scrollDirection: Axis.vertical,
         itemCount: posts.length,
         itemBuilder: (context, index) {
+          if (!_isLoadingMore && _hasMore && index >= posts.length - 2) {
+            _loadMorePosts();
+          }
           return _FlipPostCard(
             post: posts[index],
             currentIndex: index,
@@ -783,6 +904,17 @@ class _FlipPostCard extends StatelessWidget {
     required this.currentPage,
   });
 
+  Future<void> openLink(String url) async {
+    final uri = Uri.parse(url);
+
+    if (!await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    )) {
+      throw Exception('Impossible d’ouvrir le lien');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final double diff = (currentPage - currentIndex);
@@ -793,12 +925,27 @@ class _FlipPostCard extends StatelessWidget {
       transform: Matrix4.identity()
         ..setEntry(3, 2, 0.001)
         ..rotateX(-angle * 0.7),
-      child: _buildPostContent(context),
+      child: _buildPostContent(context,
+        onTap: () {
+          openLink(post.source);
+        },),
     );
   }
 
-  Widget _buildPostContent(BuildContext context) {
-    return Container(
+String extractDomain(String url) {
+  try {
+    final uri = Uri.parse(url);
+    return uri.host.replaceFirst('www.', '');
+  } catch (_) {
+    return url;
+  }
+}
+
+  Widget _buildPostContent(BuildContext context, {required VoidCallback onTap}) {
+  return GestureDetector(
+    behavior: HitTestBehavior.opaque,
+    onTap: onTap,
+    child: Container(
       color: Colors.black,
       child: Stack(
         fit: StackFit.expand,
@@ -874,7 +1021,7 @@ class _FlipPostCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    "${post.source} · ${post.timeAgo}",
+                    extractDomain(post.source),
                     style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 14,
@@ -897,14 +1044,19 @@ class _FlipPostCard extends StatelessWidget {
                       CircleAvatar(
                         radius: 16,
                         backgroundColor: Colors.purple,
-                        child: Text(
-                          post.authorName?[0] ?? "F",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        backgroundImage: (post.authorUrl != null && post.authorUrl!.isNotEmpty)
+                            ? NetworkImage(post.authorUrl!)
+                            : null,
+                        child: (post.authorUrl == null || post.authorUrl!.isEmpty)
+                            ? Text(
+                                post.authorName?.substring(0, 1).toUpperCase() ?? "F",
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              )
+                            : null,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -919,13 +1071,13 @@ class _FlipPostCard extends StatelessWidget {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const Text(
-                              "flipped into MIND SHIFT",
-                              style: TextStyle(
-                                color: Colors.white60,
-                                fontSize: 12,
-                              ),
-                            ),
+                            // const Text(
+                            //   "flipped into MIND SHIFT",
+                            //   style: TextStyle(
+                            //     color: Colors.white60,
+                            //     fontSize: 12,
+                            //   ),
+                            // ),
                           ],
                         ),
                       ),
@@ -939,14 +1091,17 @@ class _FlipPostCard extends StatelessWidget {
                   Row(
                     children: [
                       _buildActionButton(
+                        "Like",
                         Icons.favorite_border,
                         post.likes.toString(),
                         onTap: () {
+                          post.likes += 1;
                           debugPrint("LIKE → ${post.title}");
                         },
                       ),
                       const SizedBox(width: 30),
                       _buildActionButton(
+                        "",
                         Icons.comment_outlined,
                         post.comments.toString(),
                         onTap: () {
@@ -955,6 +1110,7 @@ class _FlipPostCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 30),
                       _buildActionButton(
+                        "",
                         Icons.add,
                         post.flips.toString(),
                         onTap: () {
@@ -976,14 +1132,22 @@ class _FlipPostCard extends StatelessWidget {
           ),
         ],
       ),
+    )
     );
   }
 
   Widget _buildActionButton(
+    String name,
     IconData icon,
     String count, {
     required VoidCallback onTap,
   }) {
+    var _color;
+    if (name == "Like") {
+      _color = Colors.red;
+    } else {
+      _color = Colors.white;
+    }
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
@@ -991,7 +1155,7 @@ class _FlipPostCard extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
         child: Row(
           children: [
-            Icon(icon, color: Colors.white70, size: 22),
+            Icon(icon, color: _color, size: 22),
             const SizedBox(width: 6),
             Text(
               count,

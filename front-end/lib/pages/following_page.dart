@@ -31,8 +31,8 @@ class _FollowingPageState extends State<FollowingPage> {
   // Liste des tags suivis avec leurs informations
   final List<Map<String, dynamic>> followedTags = [
     {
-      "name": "NEWS",
-      "followers": "8.5M",
+      "name": "DIVERS",
+      "followers": "10",
       "coverImage": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800",
       "articles": [
         {
@@ -56,8 +56,8 @@ class _FollowingPageState extends State<FollowingPage> {
       ],
     },
     {
-      "name": "SCIENCE",
-      "followers": "5.2M",
+      "name": "FOOT",
+      "followers": "8",
       "coverImage": "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800",
       "articles": [
         {
@@ -81,8 +81,8 @@ class _FollowingPageState extends State<FollowingPage> {
       ],
     },
     {
-      "name": "MUSIC",
-      "followers": "3.8M",
+      "name": "TENNIS",
+      "followers": "12",
       "coverImage": "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=800",
       "articles": [
         {
@@ -97,8 +97,8 @@ class _FollowingPageState extends State<FollowingPage> {
       ],
     },
     {
-      "name": "TECHNOLOGY",
-      "followers": "6.1M",
+      "name": "POLITIQUE",
+      "followers": "3",
       "coverImage": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800",
       "articles": [
         {
@@ -109,38 +109,6 @@ class _FollowingPageState extends State<FollowingPage> {
           "timeAgo": "6 hours ago",
           "imageUrl": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800",
           "url": "https://techcrunch.com",
-        },
-      ],
-    },
-    {
-      "name": "ENTREPRENEURSHIP",
-      "followers": "4.3M",
-      "coverImage": "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=800",
-      "articles": [
-        {
-          "title": "This one shift in your life will improve your happiness and success",
-          "description": "Entrepreneurs share their key to balancing work and personal life...",
-          "source": "Forbes",
-          "sourceImage": "https://images.unsplash.com/photo-1679678691006-0ad24fecb769?w=100",
-          "timeAgo": "9 hours ago",
-          "imageUrl": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800",
-          "url": "https://www.forbes.com",
-        },
-      ],
-    },
-    {
-      "name": "INSIDE FLIPBOARD",
-      "followers": "2.1M",
-      "coverImage": "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800",
-      "articles": [
-        {
-          "title": "New Year, New Intentions, New Inspiration from Flipboard",
-          "description": "Discover what's new on Flipboard for 2025...",
-          "source": "Flipboard",
-          "sourceImage": "https://images.unsplash.com/photo-1679678691006-0ad24fecb769?w=100",
-          "timeAgo": "2 days ago",
-          "imageUrl": "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800",
-          "url": "https://about.flipboard.com",
         },
       ],
     },
