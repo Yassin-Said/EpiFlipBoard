@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:epiflipboard/pages/profile/connexion/email_auth_page.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 
-class AuthSelectionPage extends StatelessWidget {
-  final bool isSignUp; // true = Sign Up, false = Log In
+class AuthSelectionPage extends StatefulWidget {
+  const AuthSelectionPage({super.key});
 
-  const AuthSelectionPage({
-    super.key,
-    this.isSignUp = true,
-  });
+  @override
+  State<AuthSelectionPage> createState() => _AuthSelectionPageState();
+}
 
-    Future<void> _googleOAuth() async {
+class _AuthSelectionPageState extends State<AuthSelectionPage> {
+  bool isSignUp = true;
+
+    Future<void> _googleOAuth(BuildContext context) async {
   try {
     final GoogleSignInAccount? user = await GoogleSignIn().signIn();
 
@@ -29,7 +33,37 @@ class AuthSelectionPage extends StatelessWidget {
     debugPrint("Photo: ${user.photoUrl}");
 
     debugPrint("Access Token: ${auth.accessToken}");
-    debugPrint("ID Token: ${auth.idToken}");
+    // debugPrint("ID Token: ${auth.idToken}");
+
+    // Récupérer les infos
+    final String username = user.displayName ?? "NoName";
+    final String avatarUrl = user.photoUrl ?? "";
+    final String bio = "Hello";
+    final int roleId = 1;
+    final String tokenOauth = auth.accessToken ?? "";
+
+    final Uri url = Uri.parse("http://127.0.0.1:8000/createProfile");
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({
+        "username": username,
+        "avatar_url": avatarUrl,
+        "bio": bio,
+        "role_id": roleId,
+        "token_oauth": tokenOauth,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      debugPrint("✅ Profile créé: $data");
+    } else {
+      debugPrint("❌ Erreur API: ${response.statusCode}");
+    }
+
+
+    Navigator.pushReplacementNamed(context, '/');
 
     /*
       👉 ICI tu récupères :
@@ -56,15 +90,6 @@ class AuthSelectionPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Bouton retour
-              Align(
-                alignment: Alignment.topLeft,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white, size: 28),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-
               const Spacer(),
 
               // Titre
@@ -92,19 +117,19 @@ class AuthSelectionPage extends StatelessWidget {
               const SizedBox(height: 40),
 
               // Bouton Email
-              _AuthButton(
-                icon: Icons.email_outlined,
-                label: "Email",
-                color: Colors.grey[800]!,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => EmailAuthPage(isSignUp: isSignUp),
-                    ),
-                  );
-                },
-              ),
+              // _AuthButton(
+              //   icon: Icons.email_outlined,
+              //   label: "Email",
+              //   color: Colors.grey[800]!,
+              //   onTap: () {
+              //     Navigator.push(
+              //       context,
+              //       MaterialPageRoute(
+              //         builder: (context) => EmailAuthPage(isSignUp: isSignUp),
+              //       ),
+              //     );
+              //   },
+              // ),
 
               const SizedBox(height: 12),
 
@@ -113,31 +138,37 @@ class AuthSelectionPage extends StatelessWidget {
                 icon: Icons.g_mobiledata,
                 label: "Google",
                 color: const Color(0xFFDB4437),
-                onTap: () => _googleOAuth(),
+                onTap: () => _googleOAuth(context),
               ),
 
               const SizedBox(height: 12),
 
-              // Bouton Facebook
-              _AuthButton(
-                icon: Icons.facebook,
-                label: "Facebook",
-                color: const Color(0xFF4267B2),
-                onTap: () => print("Facebook auth"),
-              ),
-
-              if (!isSignUp) ...[
-                const SizedBox(height: 12),
-                // Bouton Twitter (uniquement pour Log In)
-                _AuthButton(
-                  icon: Icons.flutter_dash, // Remplace par l'icône Twitter
-                  label: "Twitter",
-                  color: const Color(0xFF1DA1F2),
-                  onTap: () => print("Twitter auth"),
-                ),
-              ],
-
               const Spacer(),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    isSignUp ? "Already have an account? " : "Don't have an account? ",
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        isSignUp = !isSignUp;
+                      });
+                    },
+                    child: Text(
+                      isSignUp ? "Log in" : "Sign up",
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
 
               // Terms & Privacy
               Text.rich(
