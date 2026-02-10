@@ -11,6 +11,14 @@ class PostCreate(BaseModel):
     description: str
     image: float
 
+class ProfileCreate(BaseModel):
+    # id: str
+    username: str
+    avatar_url: str | None = None
+    bio: str | None = None
+    role_id: int
+    token_oauth: str
+
 @router.get("/getPostsByAuthorId/{author_id}")
 def get_posts_by_author_id(author_id: str):
     try:
@@ -108,3 +116,21 @@ def create_post(post: PostCreate):
         return {"success": True, "data": data.data}
     except Exception as e:
         return {"error": str(e)}
+    
+@router.post("/createProfile")
+def create_profile(profile: ProfileCreate):
+    print("Profiles !!!!!")
+    try:
+        data = supabase.table("profiles").insert({
+            # "id": profile.id,
+            "username": profile.username,
+            "avatar_url": profile.avatar_url,
+            "bio": profile.bio,
+            "role_id": profile.role_id,
+            "token_oauth": profile.token_oauth,
+        }).execute()
+
+        return {"success": True, "data": data.data}
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
