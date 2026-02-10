@@ -365,31 +365,31 @@ class _ForYouPageState extends State<ForYouPage> {
       color: Colors.black,
       child: Column(
         children: [
-          if (_isSearching)
-            Container(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      autofocus: true,
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
-                      decoration: const InputDecoration(
-                        hintText: "Search",
-                        hintStyle: TextStyle(color: Colors.white60),
-                        border: InputBorder.none,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
-                    onPressed: _toggleSearch,
-                  ),
-                ],
-              ),
-            )
-          else
+          // if (_isSearching)
+          //   Container(
+          //     padding: const EdgeInsets.all(16),
+          //     child: Row(
+          //       children: [
+          //         Expanded(
+          //           child: TextField(
+          //             controller: _searchController,
+          //             autofocus: true,
+          //             style: const TextStyle(color: Colors.white, fontSize: 18),
+          //             decoration: const InputDecoration(
+          //               hintText: "Search",
+          //               hintStyle: TextStyle(color: Colors.white60),
+          //               border: InputBorder.none,
+          //             ),
+          //           ),
+          //         ),
+          //         IconButton(
+          //           icon: const Icon(Icons.close, color: Colors.white),
+          //           onPressed: _toggleSearch,
+          //         ),
+          //       ],
+          //     ),
+          //   )
+          // else
             SizedBox(
               height: 50,
               child: Row(
@@ -434,10 +434,10 @@ class _ForYouPageState extends State<ForYouPage> {
                       },
                     ),
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.search, color: Colors.white),
-                    onPressed: _toggleSearch,
-                  ),
+                  // IconButton(
+                  //   icon: const Icon(Icons.search, color: Colors.white),
+                  //   onPressed: _toggleSearch,
+                  // ),
                 ],
               ),
             ),
