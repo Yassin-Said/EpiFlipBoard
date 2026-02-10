@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class FollowingPage extends StatefulWidget {
   const FollowingPage({super.key});
@@ -8,57 +9,157 @@ class FollowingPage extends StatefulWidget {
 }
 
 class _FollowingPageState extends State<FollowingPage> {
-  final List<String> tags = [
-    "NEWS",
-    "SCIENCE",
-    "TECHNOLOGY",
-    "INSIDE FLIPBOARD",
-  ];
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = "";
 
-  String selectedTag = "NEWS";
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
+  }
 
-  final List<Map<String, String>> articles = [
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  // Liste des tags suivis avec leurs informations
+  final List<Map<String, dynamic>> followedTags = [
     {
-      "tag": "NEWS",
-      "title": "Trump sues BBC for \$10 billion, claims defamation",
-      "image": "https://picsum.photos/400/600?1",
+      "name": "NEWS",
+      "followers": "8.5M",
+      "coverImage": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800",
+      "articles": [
+        {
+          "title": "Conservationist captures video of uncontacted tribe in the Amazon",
+          "description": "Conservationist and author Paul Rosolie is releasing video of a pre-stone age uncontacted...",
+          "source": "NBC News",
+          "sourceImage": "https://images.unsplash.com/photo-1679678691006-0ad24fecb769?w=100",
+          "timeAgo": "11 hours ago",
+          "imageUrl": "https://images.unsplash.com/photo-1516684732162-798a0062be99?w=800",
+          "url": "https://www.nbcnews.com",
+        },
+        {
+          "title": "Trump sues BBC for \$10 billion, claims defamation",
+          "description": "Former President Donald Trump filed a lawsuit against BBC...",
+          "source": "Associated Press",
+          "sourceImage": "https://images.unsplash.com/photo-1679678691006-0ad24fecb769?w=100",
+          "timeAgo": "15 hours ago",
+          "imageUrl": "https://images.unsplash.com/photo-1495020689067-958852a7765e?w=800",
+          "url": "https://apnews.com",
+        },
+      ],
     },
     {
-      "tag": "SCIENCE",
-      "title": "Scientists finally sequence the vampire squid's huge genome",
-      "image": "https://picsum.photos/400/600?2",
+      "name": "SCIENCE",
+      "followers": "5.2M",
+      "coverImage": "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800",
+      "articles": [
+        {
+          "title": "Scientists finally sequence the vampire squid's huge genome",
+          "description": "Researchers have completed the genetic mapping of one of the ocean's most mysterious creatures...",
+          "source": "Nature",
+          "sourceImage": "https://images.unsplash.com/photo-1679678691006-0ad24fecb769?w=100",
+          "timeAgo": "8 hours ago",
+          "imageUrl": "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800",
+          "url": "https://www.nature.com",
+        },
+        {
+          "title": "Blood Sugar Spikes Linked With 69% Higher Risk of Brain Fog",
+          "description": "New research reveals concerning connections between glucose levels and cognitive function...",
+          "source": "Science Daily",
+          "sourceImage": "https://images.unsplash.com/photo-1679678691006-0ad24fecb769?w=100",
+          "timeAgo": "12 hours ago",
+          "imageUrl": "https://images.unsplash.com/photo-1576086213369-97a306d36557?w=800",
+          "url": "https://www.sciencedaily.com",
+        },
+      ],
     },
     {
-      "tag": "TECHNOLOGY",
-      "title": "Smart Money Moves: Earn More, Save Better",
-      "image": "https://picsum.photos/400/600?3",
+      "name": "MUSIC",
+      "followers": "3.8M",
+      "coverImage": "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=800",
+      "articles": [
+        {
+          "title": "That was a totally rad decision. We killed that song",
+          "description": "Behind the scenes of one of the most controversial music decisions in history...",
+          "source": "Rolling Stone",
+          "sourceImage": "https://images.unsplash.com/photo-1679678691006-0ad24fecb769?w=100",
+          "timeAgo": "1 day ago",
+          "imageUrl": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800",
+          "url": "https://www.rollingstone.com",
+        },
+      ],
     },
     {
-      "tag": "INSIDE FLIPBOARD",
-      "title": "Preparing for Google Zero? Flipboard Is the Paid Solution",
-      "image": "https://picsum.photos/400/600?4",
+      "name": "TECHNOLOGY",
+      "followers": "6.1M",
+      "coverImage": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800",
+      "articles": [
+        {
+          "title": "Smart Money Moves: Earn More, Save Better",
+          "description": "Expert advice on managing your finances in the digital age...",
+          "source": "TechCrunch",
+          "sourceImage": "https://images.unsplash.com/photo-1679678691006-0ad24fecb769?w=100",
+          "timeAgo": "6 hours ago",
+          "imageUrl": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800",
+          "url": "https://techcrunch.com",
+        },
+      ],
+    },
+    {
+      "name": "ENTREPRENEURSHIP",
+      "followers": "4.3M",
+      "coverImage": "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=800",
+      "articles": [
+        {
+          "title": "This one shift in your life will improve your happiness and success",
+          "description": "Entrepreneurs share their key to balancing work and personal life...",
+          "source": "Forbes",
+          "sourceImage": "https://images.unsplash.com/photo-1679678691006-0ad24fecb769?w=100",
+          "timeAgo": "9 hours ago",
+          "imageUrl": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800",
+          "url": "https://www.forbes.com",
+        },
+      ],
+    },
+    {
+      "name": "INSIDE FLIPBOARD",
+      "followers": "2.1M",
+      "coverImage": "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=800",
+      "articles": [
+        {
+          "title": "New Year, New Intentions, New Inspiration from Flipboard",
+          "description": "Discover what's new on Flipboard for 2025...",
+          "source": "Flipboard",
+          "sourceImage": "https://images.unsplash.com/photo-1679678691006-0ad24fecb769?w=100",
+          "timeAgo": "2 days ago",
+          "imageUrl": "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800",
+          "url": "https://about.flipboard.com",
+        },
+      ],
     },
   ];
 
   @override
   Widget build(BuildContext context) {
-    final filteredArticles =
-        articles.where((a) => a["tag"] == selectedTag).toList();
-
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: _buildAppBar(),
       body: Column(
         children: [
           _buildSearchBar(),
-          _buildTags(),
-          Expanded(child: _buildGrid(filteredArticles)),
+          Expanded(child: _buildTagsGrid()),
         ],
       ),
     );
   }
 
-  // 🔝 APP BAR
   AppBar _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.black,
@@ -73,129 +174,618 @@ class _FollowingPageState extends State<FollowingPage> {
       actions: [
         IconButton(
           icon: const Icon(Icons.refresh),
-          onPressed: () {},
+          onPressed: () {
+            debugPrint("Refresh following");
+            _searchController.clear();
+          },
         ),
       ],
     );
   }
 
-  // 🔍 SEARCH BAR
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: TextField(
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          hintText: "Search Following",
-          hintStyle: const TextStyle(color: Colors.white54),
-          prefixIcon: const Icon(Icons.search, color: Colors.white54),
-          filled: true,
-          fillColor: Colors.grey.shade900,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: "Search Following",
+                hintStyle: const TextStyle(color: Colors.white54),
+                prefixIcon: const Icon(Icons.search, color: Colors.white54),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, color: Colors.white54),
+                        onPressed: () {
+                          _searchController.clear();
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: Colors.grey.shade900,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
           ),
+          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade900,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.tune, color: Colors.white54),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTagsGrid() {
+    // Filtrer les tags en fonction de la recherche
+    final filteredTags = followedTags.where((tag) {
+      final tagName = tag["name"].toString().toLowerCase();
+      return tagName.contains(_searchQuery);
+    }).toList();
+
+    // Afficher un message si aucun résultat
+    if (filteredTags.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_off,
+              size: 64,
+              color: Colors.white30,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "No tags found for \"$_searchQuery\"",
+              style: const TextStyle(
+                color: Colors.white60,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return GridView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.85,
+      ),
+      itemCount: filteredTags.length,
+      itemBuilder: (context, index) {
+        final tag = filteredTags[index];
+        return _buildTagCard(tag);
+      },
+    );
+  }
+
+  Widget _buildTagCard(Map<String, dynamic> tag) {
+    final articles = tag["articles"] as List<Map<String, dynamic>>;
+    final firstArticleImage = articles.isNotEmpty ? articles[0]["imageUrl"] : tag["coverImage"];
+
+    return GestureDetector(
+      onTap: () {
+        // Navigation vers la page des articles du tag
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TagArticlesPage(
+              tagName: tag["name"],
+              followers: tag["followers"],
+              articles: articles,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: Colors.grey[900],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Image de couverture (première image du premier article)
+            Image.network(
+              firstArticleImage,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: Colors.grey[800],
+                  child: const Icon(Icons.broken_image, color: Colors.white30, size: 60),
+                );
+              },
+            ),
+
+            // Gradient overlay
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.7),
+                    Colors.black.withOpacity(0.95),
+                  ],
+                  stops: const [0.3, 0.7, 1.0],
+                ),
+              ),
+            ),
+
+            // Contenu
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Spacer(),
+                  // Nom du tag
+                  Text(
+                    "# ${tag["name"]}",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  // Nombre de followers
+                  Text(
+                    "${tag["followers"]} Followers",
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Titre du premier article (aperçu)
+                  if (articles.isNotEmpty)
+                    Text(
+                      articles[0]["title"],
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  const SizedBox(height: 8),
+                  // Bouton More
+                  // Align(
+                  //   alignment: Alignment.centerRight,
+                  //   child: Container(
+                  //     padding: const EdgeInsets.all(4),
+                  //     decoration: BoxDecoration(
+                  //       color: Colors.white.withOpacity(0.2),
+                  //       shape: BoxShape.circle,
+                  //     ),
+                  //     child: const Icon(
+                  //       Icons.more_vert,
+                  //       color: Colors.white,
+                  //       size: 18,
+                  //     ),
+                  //   ),
+                  // ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================
+// PAGE DES ARTICLES D'UN TAG
+// ============================================
+class TagArticlesPage extends StatefulWidget {
+  final String tagName;
+  final String followers;
+  final List<Map<String, dynamic>> articles;
+
+  const TagArticlesPage({
+    super.key,
+    required this.tagName,
+    required this.followers,
+    required this.articles,
+  });
+
+  @override
+  State<TagArticlesPage> createState() => _TagArticlesPageState();
+}
+
+class _TagArticlesPageState extends State<TagArticlesPage> {
+  final List<String> _subCategories = [
+    "ALL STORIES",
+    "ISRAEL-HAMAS WAR",
+    "UKRAINE",
+    "VIDEO"
+  ];
+  
+  int _selectedSubCategory = 0;
+
+  Future<void> _openUrl(String url) async {
+    try {
+      debugPrint("Attempting to open URL: $url");
+      final Uri uri = Uri.parse(url);
+      
+      final bool launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+      
+      if (launched) {
+        debugPrint("✅ URL opened successfully: $url");
+      } else {
+        debugPrint("❌ Failed to open URL: $url");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Cannot open link: $url"),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("❌ Error opening URL: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: $e"),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(),
+            _buildSubCategories(),
+            Expanded(
+              child: _buildArticlesList(),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  // 🏷️ TAGS DYNAMIQUES
-  Widget _buildTags() {
-    return SizedBox(
-      height: 40,
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        scrollDirection: Axis.horizontal,
-        itemCount: tags.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (context, index) {
-          final tag = tags[index];
-          final isSelected = tag == selectedTag;
-
-          return GestureDetector(
-            onTap: () => setState(() => selectedTag = tag),
-            child: Text(
-              "#$tag",
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.white54,
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-              ),
-            ),
-          );
-        },
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          // Bouton retour
+          IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+          const Spacer(),
+          // Bouton Invite
+          // Container(
+          //   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          //   decoration: BoxDecoration(
+          //     color: Colors.red,
+          //     borderRadius: BorderRadius.circular(20),
+          //   ),
+          //   child: const Text(
+          //     "Invite",
+          //     style: TextStyle(
+          //       color: Colors.white,
+          //       fontWeight: FontWeight.bold,
+          //       fontSize: 14,
+          //     ),
+          //   ),
+          // ),
+          const SizedBox(width: 8),
+          IconButton(
+            icon: const Icon(Icons.tune, color: Colors.white),
+            onPressed: () {
+              debugPrint("Filter options");
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.more_vert, color: Colors.white),
+            onPressed: () {
+              debugPrint("More options");
+            },
+          ),
+        ],
       ),
     );
   }
 
-  // 🧩 GRID
-  Widget _buildGrid(List<Map<String, String>> data) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.75,
-      ),
-      itemCount: data.length,
-      itemBuilder: (context, index) {
-        final item = data[index];
-
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(12),
-          child: Stack(
-            fit: StackFit.expand,
+  Widget _buildSubCategories() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Image.network(
-                item["image"]!,
-                fit: BoxFit.cover,
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withOpacity(0.8),
-                    ],
-                  ),
+              Text(
+                "# ${widget.tagName}",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      "#${item["tag"]}",
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      item["title"]!,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
+              const SizedBox(height: 4),
+              Text(
+                "${widget.followers} Followers",
+                style: const TextStyle(
+                  color: Colors.white60,
+                  fontSize: 16,
                 ),
               ),
             ],
           ),
-        );
+        ),
+        const SizedBox(height: 20),
+        // SizedBox(
+        //   height: 45,
+        //   child: ListView.builder(
+        //     scrollDirection: Axis.horizontal,
+        //     padding: const EdgeInsets.symmetric(horizontal: 20),
+        //     itemCount: _subCategories.length,
+        //     itemBuilder: (context, index) {
+        //       final isSelected = _selectedSubCategory == index;
+        //       return GestureDetector(
+        //         onTap: () {
+        //           setState(() {
+        //             _selectedSubCategory = index;
+        //           });
+        //         },
+        //         child: Padding(
+        //           padding: const EdgeInsets.only(right: 20),
+        //           child: Column(
+        //             mainAxisSize: MainAxisSize.min,
+        //             children: [
+        //               Text(
+        //                 _subCategories[index],
+        //                 style: TextStyle(
+        //                   color: isSelected ? Colors.white : Colors.white60,
+        //                   fontSize: 14,
+        //                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        //                   letterSpacing: 0.5,
+        //                 ),
+        //               ),
+        //               const SizedBox(height: 8),
+        //               AnimatedContainer(
+        //                 duration: const Duration(milliseconds: 250),
+        //                 height: 3,
+        //                 width: isSelected ? 40 : 0,
+        //                 decoration: BoxDecoration(
+        //                   color: Colors.red,
+        //                   borderRadius: BorderRadius.circular(2),
+        //                 ),
+        //               ),
+        //             ],
+        //           ),
+        //         ),
+        //       );
+        //     },
+        //   ),
+        // ),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
+  Widget _buildArticlesList() {
+    // Trier les articles du plus récent au plus vieux
+    final sortedArticles = List<Map<String, dynamic>>.from(widget.articles);
+    // Ici on pourrait ajouter un vrai tri par date si on a les timestamps
+    
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: sortedArticles.length,
+      separatorBuilder: (context, index) => Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        height: 1,
+        color: Colors.grey[900],
+      ),
+      itemBuilder: (context, index) {
+        final article = sortedArticles[index];
+        return _buildArticleItem(article);
       },
+    );
+  }
+
+  Widget _buildArticleItem(Map<String, dynamic> article) {
+    return GestureDetector(
+      onTap: () {
+        _openUrl(article["url"]);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        color: Colors.black,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image de l'article
+            if (article["imageUrl"] != null)
+              Container(
+                width: double.infinity,
+                height: 200,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.grey[900],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Image.network(
+                  article["imageUrl"],
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.grey[800],
+                      child: const Icon(Icons.broken_image, color: Colors.white30, size: 60),
+                    );
+                  },
+                ),
+              ),
+
+            // Titre
+            Text(
+              article["title"],
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                height: 1.3,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Description
+            if (article["description"] != null)
+              Text(
+                article["description"],
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 15,
+                  height: 1.4,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            const SizedBox(height: 16),
+
+            // Source et temps
+            Row(
+              children: [
+                // Logo de la source
+                if (article["sourceImage"] != null)
+                  Container(
+                    width: 36,
+                    height: 36,
+                    margin: const EdgeInsets.only(right: 12),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey[800],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Image.network(
+                      article["sourceImage"],
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.red,
+                          child: Center(
+                            child: Text(
+                              article["source"][0].toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                // Nom de la source
+                Expanded(
+                  child: Text(
+                    article["source"],
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Temps écoulé
+            Text(
+              article["timeAgo"],
+              style: const TextStyle(
+                color: Colors.white60,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Boutons d'action
+            Row(
+              children: [
+                _buildActionButton(Icons.share, () {
+                  debugPrint("SHARE → ${article["title"]}");
+                }),
+                const SizedBox(width: 20),
+                _buildActionButton(Icons.comment_outlined, () {
+                  debugPrint("COMMENT → ${article["title"]}");
+                }),
+                const SizedBox(width: 20),
+                _buildActionButton(Icons.add, () {
+                  debugPrint("ADD → ${article["title"]}");
+                }),
+                const SizedBox(width: 20),
+                _buildActionButton(Icons.favorite_border, () {
+                  debugPrint("LIKE → ${article["title"]}");
+                }),
+                const Spacer(),
+                _buildActionButton(Icons.more_horiz, () {
+                  debugPrint("MORE → ${article["title"]}");
+                }),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: Icon(
+          icon,
+          color: Colors.white60,
+          size: 22,
+        ),
+      ),
     );
   }
 }
