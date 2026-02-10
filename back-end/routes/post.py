@@ -68,6 +68,36 @@ def get_posts(limit: int = 10, cursor: str | None = None):
         "nextCursor": next_cursor
     }
 
+
+@router.post("/countPostLikes")
+def count_post_likes(payload: dict = Body(...)):
+    try:
+        post_ids = payload.get("post_ids", [])
+
+        if not post_ids:
+            return {"success": True, "data": {}}
+
+        res = (
+            supabase
+            .table("post_liked")
+            .select("post_id", count="exact")
+            .in_("post_id", post_ids)
+            .execute()
+        )
+
+        counts = {}
+        for row in res.data:
+            post_id = row["post_id"]
+            counts[post_id] = counts.get(post_id, 0) + 1
+
+        return {
+            "success": True,
+            "data": counts
+        }
+
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 @router.post("/createPost")
 def create_post(post: PostCreate):
     try:
