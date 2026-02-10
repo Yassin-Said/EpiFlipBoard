@@ -1,9 +1,11 @@
+import 'package:epiflipboard/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'pages/feed_page.dart';
 import 'pages/following_page.dart';
 import 'pages/explore_page.dart';
 import 'pages/notification_page.dart';
 import 'pages/profile_page.dart';
+import 'pages/profile/connexion/auth_selection_page.dart';
 import 'package:device_preview/device_preview.dart';
 
 void main() => runApp(
@@ -26,8 +28,9 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.black,
       ),
       // Route initiale = FeedPage
-      initialRoute: '/',
+      initialRoute: '/auth_page',
       routes: {
+        '/auth_page': (context) => const AuthSelectionPage(),
         '/': (context) => const MainNavigation(),
         '/feed': (context) => const ForYouPage(),
         '/following': (context) => const FollowingPage(),

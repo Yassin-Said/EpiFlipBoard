@@ -26,30 +26,30 @@ class _SettingsPageState extends State<SettingsPage> {
   List<SettingItem> _getDefaultSettings() {
     return [
       SettingItem.header("Account Options"),
-      SettingItem.simple(
-        title: "Sign up",
-        subtitle: "for a new account",
-        onTap: () => {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AuthSelectionPage(isSignUp: true),
-            ),
-          ),
-        },
-      ),
-      SettingItem.simple(
-        title: "Log in",
-        subtitle: "to your existing account",
-        onTap: () => {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AuthSelectionPage(isSignUp: false),
-            ),
-          )
-        },
-      ),
+      // SettingItem.simple(
+      //   title: "Sign up",
+      //   subtitle: "for a new account",
+      //   onTap: () => {
+      //     Navigator.push(
+      //       context,
+      //       MaterialPageRoute(
+      //         builder: (context) => const AuthSelectionPage(isSignUp: true),
+      //       ),
+      //     ),
+      //   },
+      // ),
+      // SettingItem.simple(
+      //   title: "Log in",
+      //   subtitle: "to your existing account",
+      //   onTap: () => {
+      //     Navigator.push(
+      //       context,
+      //       MaterialPageRoute(
+      //         builder: (context) => const AuthSelectionPage(isSignUp: false),
+      //       ),
+      //     )
+      //   },
+      // ),
       SettingItem.simple(
         title: "Erase all content and settings",
         onTap: () => _showEraseDialog(),

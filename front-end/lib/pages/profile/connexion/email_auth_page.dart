@@ -155,19 +155,6 @@ class _EmailAuthPageState extends State<EmailAuthPage> {
                 ),
               ),
 
-              if (!widget.isSignUp) ...[
-                const SizedBox(height: 24),
-                Center(
-                  child: TextButton(
-                    onPressed: () => print("Log in without password"),
-                    child: const Text(
-                      "Log in without password",
-                      style: TextStyle(color: Colors.white70, fontSize: 15),
-                    ),
-                  ),
-                ),
-              ],
-
               const Spacer(),
 
               if (!widget.isSignUp)
