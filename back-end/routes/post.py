@@ -44,18 +44,15 @@ def get_posts(limit: int = 10, cursor: str | None = None):
             post_liked(count)
         """)
         .order("created_at", desc=True)
-        .order("id", desc=True)
         .limit(limit)
     )
-
     if cursor:
         decoded = json.loads(base64.b64decode(cursor))
-        query = (
-            query
-            .lt("created_at", decoded["createdAt"])
-            .or_(f"created_at.eq.{decoded['createdAt']},id.lt.{decoded['id']}")
-        )
 
+        query = query.or_(
+            f"created_at.lt.{decoded['createdAt']},"
+            f"and(created_at.eq.{decoded['createdAt']},id.lt.{decoded['id']})"
+        )
     data = query.execute().data
 
     for post in data:
