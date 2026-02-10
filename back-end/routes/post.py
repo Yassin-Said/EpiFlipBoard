@@ -1,6 +1,6 @@
 from supabase_client import supabase
 
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, Query
 from pydantic import BaseModel
 import base64, json
 
@@ -68,6 +68,64 @@ def get_posts(limit: int = 10, cursor: str | None = None):
         "nextCursor": next_cursor
     }
 
+@router.get("/postsByTags")
+def get_posts_by_tags(
+    limit: int = 10,
+    cursor: str | None = None,
+    tags: str | None = Query(None, description="Ex: Divers, Tennis")
+):
+    query = (
+        supabase
+        .table("posts")
+        .select("""
+            id,
+            title,
+            summary,
+            image_url,
+            link,
+            tags,
+            created_at,
+            updated_at,
+            author_id,
+
+            profiles:author_id (
+                id,
+                username,
+                avatar_url
+            )
+        """)
+        .order("created_at", desc=True)
+        .order("id", desc=True)
+        .limit(limit)
+    )
+
+    if tags:
+        query = query.eq("tags", tags)
+
+    if cursor:
+        decoded = json.loads(base64.b64decode(cursor))
+        query = query.or_(
+            f"created_at.lt.{decoded['createdAt']},"
+            f"and(created_at.eq.{decoded['createdAt']},id.lt.{decoded['id']})"
+        )
+
+    data = query.execute().data
+
+    # 🔹 Next cursor
+    next_cursor = None
+    if data:
+        last = data[-1]
+        next_cursor = base64.b64encode(
+            json.dumps({
+                "createdAt": last["created_at"],
+                "id": last["id"]
+            }).encode()
+        ).decode()
+
+    return {
+        "posts": data,
+        "nextCursor": next_cursor
+    }
 
 @router.post("/countPostLikes")
 def count_post_likes(payload: dict = Body(...)):
