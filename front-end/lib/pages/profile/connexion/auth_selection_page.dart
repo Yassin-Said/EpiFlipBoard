@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:epiflipboard/pages/profile/connexion/email_auth_page.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 
 class AuthSelectionPage extends StatelessWidget {
@@ -9,6 +10,41 @@ class AuthSelectionPage extends StatelessWidget {
     super.key,
     this.isSignUp = true,
   });
+
+    Future<void> _googleOAuth() async {
+  try {
+    final GoogleSignInAccount? user = await GoogleSignIn().signIn();
+
+    if (user == null) {
+      debugPrint("❌ Login annulé");
+      return;
+    }
+
+    final GoogleSignInAuthentication auth = await user.authentication;
+
+    debugPrint("✅ GOOGLE LOGIN SUCCESS");
+
+    debugPrint("Name: ${user.displayName}");
+    debugPrint("Email: ${user.email}");
+    debugPrint("Photo: ${user.photoUrl}");
+
+    debugPrint("Access Token: ${auth.accessToken}");
+    debugPrint("ID Token: ${auth.idToken}");
+
+    /*
+      👉 ICI tu récupères :
+        - user.displayName
+        - user.email
+        - user.photoUrl
+        - auth.accessToken
+        - auth.idToken
+
+      Tu peux les envoyer vers ton backend plus tard.
+    */
+    } catch (e) {
+      debugPrint("❌ GOOGLE AUTH ERROR: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +113,7 @@ class AuthSelectionPage extends StatelessWidget {
                 icon: Icons.g_mobiledata,
                 label: "Google",
                 color: const Color(0xFFDB4437),
-                onTap: () => print("Google auth"),
+                onTap: () => _googleOAuth(),
               ),
 
               const SizedBox(height: 12),
