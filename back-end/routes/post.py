@@ -1,6 +1,6 @@
 from supabase_client import supabase
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Body
 from pydantic import BaseModel
 import base64, json
 
