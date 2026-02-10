@@ -186,9 +186,21 @@ def create_profile(profile: ProfileCreate):
             "bio": profile.bio,
             "role_id": profile.role_id,
             "token_oauth": profile.token_oauth,
+            "email": profile.email
         }).execute()
 
         return {"success": True, "data": data.data}
 
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+    
+@router.get("/getProfileByToken/{token_oauth}")
+def get_profile_by_token(token_oauth: str):
+    try:
+        data = supabase.table("profile").select("*").eq("token_oauth", token_oauth).execute()
+        if data.data:
+            return {"success": True, "data": data.data}
+        else:
+            return {"success": False, "message": "Profile not found"}
     except Exception as e:
         return {"success": False, "error": str(e)}

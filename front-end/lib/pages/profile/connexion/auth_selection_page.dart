@@ -3,6 +3,7 @@ import 'package:epiflipboard/pages/profile/connexion/email_auth_page.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../global.dart' as globals;
 
 
 class AuthSelectionPage extends StatefulWidget {
@@ -15,69 +16,74 @@ class AuthSelectionPage extends StatefulWidget {
 class _AuthSelectionPageState extends State<AuthSelectionPage> {
   bool isSignUp = true;
 
-    Future<void> _googleOAuth(BuildContext context) async {
-  try {
-    final GoogleSignInAccount? user = await GoogleSignIn().signIn();
+  Future<void> _googleOAuth(BuildContext context) async {
+    try {
+      final GoogleSignInAccount? user = await GoogleSignIn().signIn();
 
-    if (user == null) {
-      debugPrint("❌ Login annulé");
-      return;
-    }
+      if (user == null) {
+        debugPrint("❌ Login annulé");
+        return;
+      }
 
-    final GoogleSignInAuthentication auth = await user.authentication;
+      final GoogleSignInAuthentication auth = await user.authentication;
 
-    debugPrint("✅ GOOGLE LOGIN SUCCESS");
+      debugPrint("✅ GOOGLE LOGIN SUCCESS");
 
-    debugPrint("Name: ${user.displayName}");
-    debugPrint("Email: ${user.email}");
-    debugPrint("Photo: ${user.photoUrl}");
+      debugPrint("Name: ${user.displayName}");
+      debugPrint("Email: ${user.email}");
+      debugPrint("Photo: ${user.photoUrl}");
 
-    debugPrint("Access Token: ${auth.accessToken}");
-    // debugPrint("ID Token: ${auth.idToken}");
+      globals.globalTokenOauth = auth.accessToken ?? "";
+      globals.globalUsername = user.displayName ?? "NoName";
+      globals.globalAvatarUrl = user.photoUrl ?? "";
+      globals.globalEmail = user.email ?? "";
 
-    // Récupérer les infos
-    final String username = user.displayName ?? "NoName";
-    final String avatarUrl = user.photoUrl ?? "";
-    final String bio = "Hello";
-    final int roleId = 1;
-    final String tokenOauth = auth.accessToken ?? "";
+      debugPrint("Access Token: ${auth.accessToken}");
+      // debugPrint("ID Token: ${auth.idToken}");
 
-    final Uri url = Uri.parse("http://127.0.0.1:8000/createProfile");
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "username": username,
-        "avatar_url": avatarUrl,
-        "bio": bio,
-        "role_id": roleId,
-        "token_oauth": tokenOauth,
-      }),
-    );
+      // Récupérer les infos
+      final String username = user.displayName ?? "NoName";
+      final String avatarUrl = user.photoUrl ?? "";
+      final String bio = "Hello";
+      final int roleId = 1;
+      final String tokenOauth = auth.accessToken ?? "";
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      debugPrint("✅ Profile créé: $data");
-    } else {
-      debugPrint("❌ Erreur API: ${response.statusCode}");
-    }
+      final Uri url = Uri.parse("https://epiflipboard-iau1.onrender.com/createProfile");
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "username": username,
+          "avatar_url": avatarUrl,
+          "bio": bio,
+          "role_id": roleId,
+          "token_oauth": tokenOauth,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        debugPrint("✅ Profile créé: $data");
+      } else {
+        debugPrint("❌ Erreur API: ${response.statusCode}");
+      }
 
 
-    Navigator.pushReplacementNamed(context, '/');
+      Navigator.pushReplacementNamed(context, '/');
 
-    /*
-      👉 ICI tu récupères :
-        - user.displayName
-        - user.email
-        - user.photoUrl
-        - auth.accessToken
-        - auth.idToken
+      /*
+        👉 ICI tu récupères :
+          - user.displayName
+          - user.email
+          - user.photoUrl
+          - auth.accessToken
+          - auth.idToken
 
-      Tu peux les envoyer vers ton backend plus tard.
-    */
-    } catch (e) {
-      debugPrint("❌ GOOGLE AUTH ERROR: $e");
-    }
+        Tu peux les envoyer vers ton backend plus tard.
+      */
+      } catch (e) {
+        debugPrint("❌ GOOGLE AUTH ERROR: $e");
+      }
   }
 
   @override

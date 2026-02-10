@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../models/setting_item.dart';
 import 'package:epiflipboard/pages/profile/connexion/auth_selection_page.dart';
+import '../global.dart' as global;
+
 
 class SettingsPage extends StatefulWidget {
   final List<SettingItem>? customSettings; // Optionnel, si null on utilise les paramètres par défaut
@@ -50,6 +52,20 @@ class _SettingsPageState extends State<SettingsPage> {
       //     )
       //   },
       // ),
+      SettingItem.simple(
+        title: "Log Out",
+        onTap: () {
+          // Réinitialiser les globals
+          global.globalUsername = "";
+          global.globalAvatarUrl = "";
+          global.globalTokenOauth = "";
+          global.globalEmail = "";
+
+          // Naviguer vers la page de connexion
+          Navigator.of(context).pushReplacementNamed('/auth_page');
+        },
+      ),
+      
       SettingItem.simple(
         title: "Erase all content and settings",
         onTap: () => _showEraseDialog(),

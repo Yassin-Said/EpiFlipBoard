@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../tools/icon_button.dart';
-
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'profile/history_page.dart';
 import 'profile/find_people_page.dart';
 import 'profile/settings_page.dart';
 import 'profile/share_profile_page.dart';
+import 'global.dart' as global;
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -56,8 +58,51 @@ class ProfileStat extends StatelessWidget {
   }
 }
 
-class LoggedInProfile extends StatelessWidget {
+class LoggedInProfile extends StatefulWidget {
   const LoggedInProfile({super.key});
+
+  @override
+  State<LoggedInProfile> createState() => _LoggedInProfileState();
+}
+
+class _LoggedInProfileState extends State<LoggedInProfile> {
+  String username = global.globalUsername;
+  String avatarUrl = global.globalAvatarUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchProfile();
+  }
+
+  Future<void> fetchProfile() async {
+    try {
+      final Uri url = Uri.parse(
+          "https://epiflipboard-iau1.onrender.com/getProfileByToken/${global.globalTokenOauth}");
+
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['success'] == true && data['data'].isNotEmpty) {
+          final profile = data['data'][0];
+          setState(() {
+            username = profile['username'] ?? "No Name";
+            avatarUrl = profile['avatar_url'] ?? "";
+            // Mettre à jour la globale aussi si tu veux
+            global.globalUsername = username;
+            global.globalAvatarUrl = avatarUrl;
+          });
+        } else {
+          debugPrint("❌ Profil non trouvé");
+        }
+      } else {
+        debugPrint("❌ Erreur API: ${response.statusCode}");
+      }
+    } catch (e) {
+      debugPrint("❌ Erreur fetchProfile: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,25 +150,28 @@ class LoggedInProfile extends StatelessWidget {
             const SizedBox(height: 20),
 
             // Photo de profil
-            const CircleAvatar(
+            CircleAvatar(
               radius: 45,
               backgroundColor: Colors.purple,
-              child: Text(
-                "G",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 48,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
+              child: avatarUrl.isEmpty
+                  ? Text(
+                      username.isNotEmpty ? username[0].toUpperCase() : "U",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 48,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : null,
             ),
 
             const SizedBox(height: 20),
 
-            // Nom
-            const Text(
-              "GUILLYANN FERRERE",
-              style: TextStyle(
+            // Username dynamique
+            Text(
+              username, // plus de const ici !
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -133,7 +181,7 @@ class LoggedInProfile extends StatelessWidget {
 
             const SizedBox(height: 8),
 
-            // Username + followers
+            // Username + followers (statique pour l'instant)
             const Text(
               "@Aitroxy · 0 Followers",
               style: TextStyle(
@@ -146,13 +194,7 @@ class LoggedInProfile extends StatelessWidget {
 
             // Stats en ligne
             const Row(
-              children: [
-                ProfileStat(value: "0", title: "Flips"),
-                SizedBox(width: 40),
-                ProfileStat(value: "0", title: "Likes"),
-                SizedBox(width: 40),
-                ProfileStat(value: "0", title: "Magazines"),
-              ],
+              // children: [...]
             ),
 
             const SizedBox(height: 40),
@@ -160,7 +202,7 @@ class LoggedInProfile extends StatelessWidget {
             // Zone vide pour le contenu futur (magazines, etc.)
             Expanded(
               child: Container(
-                // Ici tu ajouteras plus tard la grille de magazines
+                // futur contenu
               ),
             ),
           ],
