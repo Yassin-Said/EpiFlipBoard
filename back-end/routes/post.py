@@ -39,25 +39,21 @@ def get_posts(limit: int = 10, cursor: str | None = None):
                 id,
                 username,
                 avatar_url
-            ),
-
-            post_liked(count)
+            )
         """)
         .order("created_at", desc=True)
+        .order("id", desc=True)
         .limit(limit)
     )
+
     if cursor:
         decoded = json.loads(base64.b64decode(cursor))
-
         query = query.or_(
             f"created_at.lt.{decoded['createdAt']},"
             f"and(created_at.eq.{decoded['createdAt']},id.lt.{decoded['id']})"
         )
-    data = query.execute().data
 
-    for post in data:
-        post["likes"] = post["post_liked"]["count"] if post.get("post_liked") else 0
-        del post["post_liked"]
+    data = query.execute().data
 
     next_cursor = None
     if data:
@@ -71,7 +67,6 @@ def get_posts(limit: int = 10, cursor: str | None = None):
         "posts": data,
         "nextCursor": next_cursor
     }
-
 
 @router.post("/createPost")
 def create_post(post: PostCreate):
