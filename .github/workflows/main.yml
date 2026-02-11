@@ -27,12 +27,15 @@ jobs:
           channel: 'stable'
 
       - name: Install dependencies
+        working-directory: front-end
         run: flutter pub get
 
       - name: Run tests
+        working-directory: front-end
         run: flutter test
 
       - name: Build APK (release)
+        working-directory: front-end
         run: flutter build apk --release
 
       - name: Create build info file with Swagger link
