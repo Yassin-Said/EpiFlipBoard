@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class FollowingPage extends StatefulWidget {
   const FollowingPage({super.key});
@@ -20,6 +22,7 @@ class _FollowingPageState extends State<FollowingPage> {
         _searchQuery = _searchController.text.toLowerCase();
       });
     });
+    fetchFollowedTags();
   }
 
   @override
@@ -28,91 +31,58 @@ class _FollowingPageState extends State<FollowingPage> {
     super.dispose();
   }
 
+Future<void> fetchFollowedTags() async {
+  final List<String> tagsList = ["Divers", "Tennis", "Politique", "Foot"];
+
+  try {
+    List<Map<String, dynamic>> tempFollowedTags = [];
+
+    for (String tagName in tagsList) {
+      final response = await http.get(
+        Uri.parse(
+          "https://epiflipboard-iau1.onrender.com/postsByTags?tags=$tagName",
+        ),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> decoded = jsonDecode(response.body);
+        final List<dynamic> posts = decoded["posts"] ?? [];
+
+        tempFollowedTags.add({
+          "name": tagName.toUpperCase(),
+          "followers": "5", // temporaire
+          "coverImage": posts.isNotEmpty ? posts[0]["image_url"] : null,
+          "articles": posts.map((article) {
+            return {
+              "title": article["title"],
+              "description": article["summary"],
+              "source": article["link"],
+              "sourceImage": article["image_url"],
+              "timeAgo": article["created_at"], // à formater plus tard
+              "imageUrl": article["image_url"],
+              "url": article["link"],
+            };
+          }).toList(),
+        });
+      } else {
+        debugPrint("Erreur API pour $tagName: ${response.statusCode}");
+      }
+    }
+
+    setState(() {
+      followedTags.clear();
+      followedTags.addAll(tempFollowedTags);
+    });
+
+  } catch (e) {
+    debugPrint("Erreur fetchFollowedTags: $e");
+  }
+}
   // Liste des tags suivis avec leurs informations
-  final List<Map<String, dynamic>> followedTags = [
-    {
-      "name": "DIVERS",
-      "followers": "10",
-      "coverImage": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=800",
-      "articles": [
-        {
-          "title": "Conservationist captures video of uncontacted tribe in the Amazon",
-          "description": "Conservationist and author Paul Rosolie is releasing video of a pre-stone age uncontacted...",
-          "source": "NBC News",
-          "sourceImage": "https://images.unsplash.com/photo-1679678691006-0ad24fecb769?w=100",
-          "timeAgo": "11 hours ago",
-          "imageUrl": "https://images.unsplash.com/photo-1516684732162-798a0062be99?w=800",
-          "url": "https://www.nbcnews.com",
-        },
-        {
-          "title": "Trump sues BBC for \$10 billion, claims defamation",
-          "description": "Former President Donald Trump filed a lawsuit against BBC...",
-          "source": "Associated Press",
-          "sourceImage": "https://images.unsplash.com/photo-1679678691006-0ad24fecb769?w=100",
-          "timeAgo": "15 hours ago",
-          "imageUrl": "https://images.unsplash.com/photo-1495020689067-958852a7765e?w=800",
-          "url": "https://apnews.com",
-        },
-      ],
-    },
-    {
-      "name": "FOOT",
-      "followers": "8",
-      "coverImage": "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=800",
-      "articles": [
-        {
-          "title": "Scientists finally sequence the vampire squid's huge genome",
-          "description": "Researchers have completed the genetic mapping of one of the ocean's most mysterious creatures...",
-          "source": "Nature",
-          "sourceImage": "https://images.unsplash.com/photo-1679678691006-0ad24fecb769?w=100",
-          "timeAgo": "8 hours ago",
-          "imageUrl": "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800",
-          "url": "https://www.nature.com",
-        },
-        {
-          "title": "Blood Sugar Spikes Linked With 69% Higher Risk of Brain Fog",
-          "description": "New research reveals concerning connections between glucose levels and cognitive function...",
-          "source": "Science Daily",
-          "sourceImage": "https://images.unsplash.com/photo-1679678691006-0ad24fecb769?w=100",
-          "timeAgo": "12 hours ago",
-          "imageUrl": "https://images.unsplash.com/photo-1576086213369-97a306d36557?w=800",
-          "url": "https://www.sciencedaily.com",
-        },
-      ],
-    },
-    {
-      "name": "TENNIS",
-      "followers": "12",
-      "coverImage": "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=800",
-      "articles": [
-        {
-          "title": "That was a totally rad decision. We killed that song",
-          "description": "Behind the scenes of one of the most controversial music decisions in history...",
-          "source": "Rolling Stone",
-          "sourceImage": "https://images.unsplash.com/photo-1679678691006-0ad24fecb769?w=100",
-          "timeAgo": "1 day ago",
-          "imageUrl": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800",
-          "url": "https://www.rollingstone.com",
-        },
-      ],
-    },
-    {
-      "name": "POLITIQUE",
-      "followers": "3",
-      "coverImage": "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800",
-      "articles": [
-        {
-          "title": "Smart Money Moves: Earn More, Save Better",
-          "description": "Expert advice on managing your finances in the digital age...",
-          "source": "TechCrunch",
-          "sourceImage": "https://images.unsplash.com/photo-1679678691006-0ad24fecb769?w=100",
-          "timeAgo": "6 hours ago",
-          "imageUrl": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800",
-          "url": "https://techcrunch.com",
-        },
-      ],
-    },
-  ];
+  final List<Map<String, dynamic>> followedTags = [];
 
   @override
   Widget build(BuildContext context) {
