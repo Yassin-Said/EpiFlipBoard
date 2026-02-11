@@ -29,7 +29,11 @@ jobs:
       - name: Install dependencies
         working-directory: front-end
         run: flutter pub get
-
+        
+      - name: Print SHA1
+        working-directory: front-end
+        run: keytool -list -v -keystore android/app/release.keystore -alias release -storepass ${{ secrets.KEYSTORE_PASSWORD }}
+  
       - name: Run tests
         working-directory: front-end
         run: flutter test
