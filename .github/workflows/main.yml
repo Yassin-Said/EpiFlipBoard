@@ -41,7 +41,7 @@ jobs:
       - name: Create build info file with Swagger link
         run: |
           echo "Build date: $(date)" > build_info.txt
-          echo "Swagger documentation: https://epiflipboard-iau1.onrender.com" >> build_info.txt
+          echo "Swagger documentation: https://epiflipboard-iau1.onrender.com/docs" >> build_info.txt
           echo "Commit: $GITHUB_SHA" >> build_info.txt
 
       - name: Upload APK artifact
