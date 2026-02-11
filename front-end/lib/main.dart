@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.black,
       ),
       // Route initiale = FeedPage
-      initialRoute: '/auth_page',
+      initialRoute: '/',
       routes: {
         '/auth_page': (context) => const AuthSelectionPage(),
         '/': (context) => const MainNavigation(),
