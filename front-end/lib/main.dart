@@ -1,4 +1,3 @@
-import 'package:epiflipboard/pages/home_page.dart';
 import 'package:flutter/material.dart';
 import 'pages/feed_page.dart';
 import 'pages/following_page.dart';
