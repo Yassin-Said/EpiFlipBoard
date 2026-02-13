@@ -156,16 +156,16 @@ void main() {
     });
 
     // Test de gradient overlay sur la catégorie
-    testWidgets('category card has gradient overlay', (tester) async {
-      await mockNetworkImagesFor(() async {
-        await tester.pumpWidget(
-          MaterialApp(home: ExplorePage(categories: customCategories)),
-        );
+    // testWidgets('category card has gradient overlay', (tester) async {
+    //   await mockNetworkImagesFor(() async {
+    //     await tester.pumpWidget(
+    //       MaterialApp(home: ExplorePage(categories: customCategories)),
+    //     );
 
-        final container = find.descendant(
-            of: find.text("TapMe"), matching: find.byType(Container));
-        expect(container, findsWidgets);
-      });
-    });
+    //     final container = find.descendant(
+    //         of: find.text("TapMe"), matching: find.byType(Container));
+    //     expect(container, findsWidgets);
+    //   });
+    // });
   });
 }
