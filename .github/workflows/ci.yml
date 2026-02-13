@@ -2,9 +2,9 @@ name: Flutter CI
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "dev" ]
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "dev" ]
 
 jobs:
   test:
@@ -18,15 +18,18 @@ jobs:
           channel: 'stable'
 
       - name: Install dependencies
+        working-directory: front-end
         run: flutter pub get
 
       - name: Run tests with coverage
+        working-directory: front-end
         run: flutter test --coverage
 
       - name: Install lcov
         run: sudo apt-get install -y lcov
 
       - name: Check coverage >= 70%
+        working-directory: front-end
         run: |
           COVERAGE=$(lcov --summary coverage/lcov.info | grep lines | awk '{print $2}' | sed 's/%//')
           echo "Coverage = $COVERAGE%"
