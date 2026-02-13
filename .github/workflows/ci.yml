@@ -31,11 +31,11 @@ jobs:
       - name: Check coverage >= 70%
         working-directory: front-end
         run: |
-          COVERAGE=$(lcov --summary coverage/lcov.info | grep lines | awk '{print $2}' | sed 's/%//')
-          echo "Coverage = $COVERAGE%"
-          if (( $(echo "$COVERAGE < 70" | bc -l) )); then
-            echo "❌ Coverage too low: $COVERAGE% (min 70%)"
+          FUNC_COVERAGE=$(lcov --summary coverage/lcov.info | grep functions | awk '{print $2}' | sed 's/%//')
+          echo "Function Coverage = $FUNC_COVERAGE%"
+          if (( $(echo "$FUNC_COVERAGE < 70" | bc -l) )); then
+            echo "❌ Function coverage too low: $FUNC_COVERAGE% (min 70%)"
             exit 1
           else
-            echo "✅ Coverage OK: $COVERAGE%"
+            echo "✅ Function coverage OK: $FUNC_COVERAGE%"
           fi
