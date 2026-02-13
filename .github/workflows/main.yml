@@ -30,18 +30,18 @@ jobs:
         working-directory: front-end
         run: flutter pub get
 
-      - name: Print SHA-1 of release keystore
+      - name: Print full keystore info
         working-directory: front-end
-        run: |
-          keytool -list -v \
-            -keystore release-key.jks \
-            -alias $ANDROID_KEY_ALIAS \
-            -storepass $ANDROID_STORE_PASSWORD \
-            -keypass $ANDROID_KEY_PASSWORD | grep SHA1
         env:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+        run: |
+          keytool -list -v \
+            -keystore release-key.jks \
+            -alias "$ANDROID_KEY_ALIAS" \
+            -storepass "$ANDROID_STORE_PASSWORD" \
+            -keypass "$ANDROID_KEY_PASSWORD"
 
       - name: Restore keystore
         run: |
