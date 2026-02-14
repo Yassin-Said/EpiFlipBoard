@@ -34,13 +34,13 @@ This README provides **everything you need to install, run, and contribute to th
 ---
 
 # 🏗 Architecture
-EpiFlipBoard/
+
+```EpiFlipBoard/
 │
 ├── back-end/ → Python API (FastAPI + Render)
 ├── front-end/ → Flutter Application
 └── database/ → Supabase (PostgreSQL + Auth + Storage)
-
----
+```
 
 # 🧠 Backend — Python + FastAPI + Render
 
@@ -75,7 +75,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-###3. Run backend locally
+### 3. Run backend locally
 
 ```
 uvicorn main:app --reload
@@ -154,13 +154,14 @@ build/app/outputs/flutter-apk/app-release.apk
 
 ## Flutter structure
 
-lib/
+```lib/
 │
 ├── pages/      → UI pages
 ├── models/     → Data models
 ├── services/   → API services
 ├── widgets/    → Reusable widgets
 └── main.dart   → Entry point
+```
 
 ### Environment Variables
 
