@@ -180,7 +180,6 @@ def create_profile(profile: ProfileCreate):
     print("Profiles !!!!!")
     try:
         data = supabase.table("profiles").insert({
-            # "id": profile.id,
             "username": profile.username,
             "avatar_url": profile.avatar_url,
             "bio": profile.bio,
