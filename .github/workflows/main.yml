@@ -33,7 +33,7 @@ jobs:
       - name: Restore keystore
         working-directory: front-end
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > release-key.jks
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > front-end/android/app/release-key.jks
 
       - name: Build release APK
         working-directory: front-end
