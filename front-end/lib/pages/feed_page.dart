@@ -467,7 +467,7 @@ class _ForYouPageState extends State<ForYouPage> {
           if (!_isLoadingMore && _hasMore && index >= posts.length - 2) {
             _loadMorePosts();
           }
-          return _FlipPostCard(
+          return FlipPostCard(
             post: posts[index],
             currentIndex: index,
             currentPage: _currentPageValue,
@@ -878,7 +878,7 @@ class _DetailedPostsViewState extends State<DetailedPostsView> {
           scrollDirection: Axis.vertical,
           itemCount: widget.posts.length,
           itemBuilder: (context, index) {
-            return _FlipPostCard(
+            return FlipPostCard(
               post: widget.posts[index],
               currentIndex: index,
               currentPage: _currentPage,
@@ -893,12 +893,12 @@ class _DetailedPostsViewState extends State<DetailedPostsView> {
 // ============================================
 // CARTE DE POST AVEC EFFET FLIP
 // ============================================
-class _FlipPostCard extends StatelessWidget {
+class FlipPostCard extends StatelessWidget {
   final DetailedPost post;
   final int currentIndex;
   final double currentPage;
 
-  const _FlipPostCard({
+  const FlipPostCard({
     required this.post,
     required this.currentIndex,
     required this.currentPage,

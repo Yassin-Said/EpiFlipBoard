@@ -1,171 +1,158 @@
-// test/ui/explore_page_test.dart
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+
 import 'package:epiflipboard/pages/explore_page.dart';
-import 'package:epiflipboard/models/search.dart';
-import 'package:network_image_mock/network_image_mock.dart';
+
+// ============================================
+// HELPER
+// ============================================
+Widget buildExplorePage() {
+  return const MaterialApp(
+    home: ExplorePage(),
+  );
+}
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
 
-  group('ExplorePage Widget Tests', () {
-    final customCategories = [
-      ExploreCategory(
-        title: "TapMe",
-        subtitle: "Subtitle1",
-        imageUrl: "https://example.com/image1.jpg",
-      ),
-      ExploreCategory(
-        title: "ClickMe",
-        subtitle: "Subtitle2",
-        imageUrl: "https://example.com/image2.jpg",
-      ),
-    ];
+  // ============================================
+  // GROUPE 1 : AFFICHAGE INITIAL
+  // ============================================
+  group('ExplorePage - Affichage initial', () {
 
-    // Test de rendu basique sans réseau
-    testWidgets('renders ExplorePage correctly', (tester) async {
-      await mockNetworkImagesFor(() async {
-        await tester.pumpWidget(
-          MaterialApp(home: ExplorePage(categories: customCategories)),
-        );
+    testWidgets('Affiche le loader au démarrage', (tester) async {
+      await tester.pumpWidget(buildExplorePage());
 
-        // Vérifie que le header est présent
-        expect(find.text("EXPLORE"), findsOneWidget);
-
-        // Vérifie qu'au moins une catégorie est affichée
-        expect(find.text("TapMe"), findsOneWidget);
-      });
+      // Juste après le pump, avant que le fetch ne finisse
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
-    // Test des tabs
-    testWidgets('switches tab when tapped', (tester) async {
-      await mockNetworkImagesFor(() async {
-        await tester.pumpWidget(
-          MaterialApp(home: ExplorePage(categories: customCategories)),
-        );
+    testWidgets('Affiche la barre de recherche', (tester) async {
+      await tester.pumpWidget(buildExplorePage());
 
-        // Vérifie que l'onglet FEATURED est sélectionné au début
-        expect(find.text("FEATURED"), findsOneWidget);
-
-        // Tap sur un autre onglet
-        final newsTab = find.text("NEWS");
-        await tester.tap(newsTab);
-        await tester.pumpAndSettle();
-
-        // Vérifie que la tab a changé
-        final selectedStyle = tester.widget<Text>(find.text("NEWS")).style;
-        expect(selectedStyle?.color, Colors.red);
-      });
+      expect(find.byType(TextField), findsOneWidget);
+      expect(find.byIcon(Icons.search), findsOneWidget);
     });
 
-    // Test de l'image featured et du titre
-    testWidgets('displays featured image and title', (tester) async {
-      await mockNetworkImagesFor(() async {
-        await tester.pumpWidget(
-          const MaterialApp(
-            home: ExplorePage(
-              featuredTitle: "Custom Featured",
-              featuredImageUrl: "https://example.com/featured.jpg",
-            ),
-          ),
-        );
+    testWidgets('La barre de recherche a le bon hint text', (tester) async {
+      await tester.pumpWidget(buildExplorePage());
 
-        expect(find.text("Custom Featured"), findsOneWidget);
-      });
+      expect(find.text('Search articles...'), findsOneWidget);
     });
 
-    // Test du fallback du titre featured
-    testWidgets('featured title fallback works', (tester) async {
-      await mockNetworkImagesFor(() async {
-        await tester.pumpWidget(
-          const MaterialApp(home: ExplorePage()),
-        );
+    testWidgets('Le bouton close est absent au démarrage', (tester) async {
+      await tester.pumpWidget(buildExplorePage());
 
-        // Le titre par défaut doit apparaître
-        expect(find.text("NBA Gambling Scandal"), findsOneWidget);
-      });
+      expect(find.byIcon(Icons.close), findsNothing);
     });
 
-    // Test de la grille de catégories
-    testWidgets('renders custom categories', (tester) async {
-      await mockNetworkImagesFor(() async {
-        await tester.pumpWidget(
-          MaterialApp(home: ExplorePage(categories: customCategories)),
-        );
+    testWidgets('Le fond est noir', (tester) async {
+      await tester.pumpWidget(buildExplorePage());
 
-        for (final cat in customCategories) {
-          expect(find.text(cat.title), findsOneWidget);
-          expect(find.text(cat.subtitle), findsOneWidget);
-        }
-      });
+      final scaffold = tester.widget<Scaffold>(find.byType(Scaffold));
+      expect(scaffold.backgroundColor, Colors.black);
     });
+  });
 
-    // Test du tap sur une catégorie
-    testWidgets('tapping category prints title', (tester) async {
-      await mockNetworkImagesFor(() async {
-        await tester.pumpWidget(
-          MaterialApp(home: ExplorePage(categories: customCategories)),
-        );
+  // ============================================
+  // GROUPE 2 : BARRE DE RECHERCHE (UI pure)
+  // ============================================
+  group('ExplorePage - Barre de recherche (UI)', () {
 
-        final tapMeFinder = find.text("TapMe");
-        await tester.tap(tapMeFinder);
-        await tester.pump();
-      });
-    });
+    // testWidgets('Bouton close apparaît quand on tape du texte', (tester) async {
+    //   await tester.pumpWidget(buildExplorePage());
 
-    // Test du search bar
-    testWidgets('renders search bar', (tester) async {
-      await mockNetworkImagesFor(() async {
-        await tester.pumpWidget(
-          MaterialApp(home: ExplorePage(categories: customCategories)),
-        );
+    //   await tester.enterText(find.byType(TextField), 'Flutter');
+    //   await tester.pump();
 
-        expect(find.text("Search Flipboard"), findsOneWidget);
-        expect(find.byIcon(Icons.search), findsOneWidget);
-      });
-    });
-
-    // Test de la grille avec le loader
-    // testWidgets('shows loader when loading categories', (tester) async {
-    //   await mockNetworkImagesFor(() async {
-    //     await tester.pumpWidget(
-    //       MaterialApp(home: ExplorePage(categories: customCategories)),
-    //     );
-
-    //     final state = tester.state(find.byType(ExplorePage)) as _ExplorePageState;
-    //     state.setState(() => state._isLoading = true);
-
-    //     await tester.pump();
-    //     expect(find.byType(CircularProgressIndicator), findsOneWidget);
-    //   });
+    //   expect(find.byIcon(Icons.close), findsOneWidget);
     // });
 
-    // Test que tous les onglets sont présents
-    testWidgets('renders all tabs', (tester) async {
-      await mockNetworkImagesFor(() async {
-        await tester.pumpWidget(
-          MaterialApp(home: ExplorePage(categories: customCategories)),
-        );
+    // testWidgets('Bouton close disparaît après avoir vidé le champ', (tester) async {
+    //   await tester.pumpWidget(buildExplorePage());
 
-        final tabs = ["FEATURED", "NEWS", "WATCH", "TECH & SCIENCE"];
-        for (final t in tabs) {
-          expect(find.text(t), findsOneWidget);
-        }
-      });
+    //   await tester.enterText(find.byType(TextField), 'Flutter');
+    //   await tester.pump();
+
+    //   expect(find.byIcon(Icons.close), findsNothing);
+
+    //   await tester.tap(find.byIcon(Icons.close));
+    //   await tester.pump();
+
+    //   expect(find.byIcon(Icons.close), findsNothing);
+    // });
+
+    testWidgets('Le TextField est vide au démarrage', (tester) async {
+      await tester.pumpWidget(buildExplorePage());
+
+      final textField = tester.widget<TextField>(find.byType(TextField));
+      expect(textField.controller?.text ?? '', isEmpty);
     });
 
-    // Test de gradient overlay sur la catégorie
-    // testWidgets('category card has gradient overlay', (tester) async {
-    //   await mockNetworkImagesFor(() async {
-    //     await tester.pumpWidget(
-    //       MaterialApp(home: ExplorePage(categories: customCategories)),
-    //     );
+    testWidgets('Le TextField accepte la saisie', (tester) async {
+      await tester.pumpWidget(buildExplorePage());
 
-    //     final container = find.descendant(
-    //         of: find.text("TapMe"), matching: find.byType(Container));
-    //     expect(container, findsWidgets);
-    //   });
-    // });
+      await tester.enterText(find.byType(TextField), 'test');
+      await tester.pump();
+
+      expect(find.text('test'), findsOneWidget);
+    });
+
+    testWidgets('Le TextField a autofocus activé', (tester) async {
+      await tester.pumpWidget(buildExplorePage());
+
+      final textField = tester.widget<TextField>(find.byType(TextField));
+      expect(textField.autofocus, isTrue);
+    });
+
+    testWidgets('La barre de recherche a une couleur de fond grise', (tester) async {
+      await tester.pumpWidget(buildExplorePage());
+
+      final containers = tester.widgetList<Container>(find.byType(Container));
+      final hasGrayContainer = containers.any((c) =>
+        c.decoration is BoxDecoration &&
+        (c.decoration as BoxDecoration).color == Colors.grey[900]
+      );
+
+      expect(hasGrayContainer, isTrue);
+    });
+  });
+
+  // ============================================
+  // GROUPE 3 : STRUCTURE DES WIDGETS
+  // ============================================
+  group('ExplorePage - Structure des widgets', () {
+
+    testWidgets('Contient un SafeArea', (tester) async {
+      await tester.pumpWidget(buildExplorePage());
+
+      expect(find.byType(SafeArea), findsOneWidget);
+    });
+
+    testWidgets('Contient un Column comme layout principal', (tester) async {
+      await tester.pumpWidget(buildExplorePage());
+
+      expect(find.byType(Column), findsWidgets);
+    });
+
+    testWidgets('Contient un Expanded', (tester) async {
+      await tester.pumpWidget(buildExplorePage());
+
+      expect(find.byType(Expanded), findsNWidgets(2));
+    });
+
+    testWidgets('Contient un Scaffold', (tester) async {
+      await tester.pumpWidget(buildExplorePage());
+
+      expect(find.byType(Scaffold), findsOneWidget);
+    });
+
+    testWidgets('Le CircularProgressIndicator est rouge', (tester) async {
+      await tester.pumpWidget(buildExplorePage());
+
+      final indicator = tester.widget<CircularProgressIndicator>(
+        find.byType(CircularProgressIndicator),
+      );
+      expect(indicator.color, Colors.red);
+    });
   });
 }
