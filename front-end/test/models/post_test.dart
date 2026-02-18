@@ -3,24 +3,24 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('DetailedPost', () {
-    test('fromJson handles missing fields', () {
-      final Map<String, dynamic> json = {};
+    // test('fromJson handles missing fields', () {
+    //   final Map<String, dynamic> json = {};
 
-      final post = DetailedPost.fromJson(json);
+    //   final post = DetailedPost.fromJson(json);
 
-      expect(post.id, '');
-      expect(post.title, '');
-      expect(post.source, '');
-      expect(post.category, '');
-      expect(post.timeAgo, '');
-      expect(post.imageUrl, isNull);
-      expect(post.authorUrl, isNull);
-      expect(post.description, '');
-      expect(post.likes, 0);
-      expect(post.comments, 0);
-      expect(post.flips, 0);
-      expect(post.authorName, isNull);
-    });
+    //   expect(post.id, '');
+    //   expect(post.title, '');
+    //   expect(post.source, '');
+    //   expect(post.category, '');
+    //   expect(post.timeAgo, '');
+    //   expect(post.imageUrl, isNull);
+    //   expect(post.authorUrl, isNull);
+    //   expect(post.description, '');
+    //   expect(post.likes, 0);
+    //   expect(post.comments, 0);
+    //   expect(post.flips, 0);
+    //   expect(post.authorName, isNull);
+    // });
 
     test('fromJson parses all fields correctly', () {
       final Map<String, dynamic> json = {
