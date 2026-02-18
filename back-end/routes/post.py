@@ -27,6 +27,81 @@ def get_posts_by_author_id(author_id: str):
     except Exception as e:
         return {"error": str(e)}
 
+@router.get("/getPostsById/{id}")
+def get_all_posts(id: str):
+    try:
+        data = (
+            supabase
+            .table("posts")
+            .select("""
+                id,
+                title,
+                summary,
+                image_url,
+                link,
+                tags,
+                created_at,
+                updated_at,
+                author_id,
+
+                profiles:author_id (
+                    id,
+                    username,
+                    avatar_url
+                )
+            """)
+            .eq("id", id)
+            .order("created_at", desc=True)
+            .execute()
+        )
+
+        return {
+            "success": True,
+            "posts": data.data
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+@router.get("/allPosts")
+def get_all_posts():
+    try:
+        data = (
+            supabase
+            .table("posts")
+            .select("""
+                id,
+                title,
+                summary,
+                image_url,
+                link,
+                tags,
+                created_at,
+                updated_at,
+                author_id,
+
+                profiles:author_id (
+                    id,
+                    username,
+                    avatar_url
+                )
+            """)
+            .order("created_at", desc=True)
+            .execute()
+        )
+
+        return {
+            "success": True,
+            "posts": data.data
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 @router.get("/posts")
 def get_posts(limit: int = 10, cursor: str | None = None):
     query = (
@@ -180,7 +255,6 @@ def create_profile(profile: ProfileCreate):
     print("Profiles !!!!!")
     try:
         data = supabase.table("profiles").insert({
-            # "id": profile.id,
             "username": profile.username,
             "avatar_url": profile.avatar_url,
             "bio": profile.bio,

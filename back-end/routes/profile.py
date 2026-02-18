@@ -10,7 +10,16 @@ def get_profile():
         data = supabase.table("profiles").select("*").execute()
         return data.data
     except Exception as e:
+        return {"error": str(e)}   
+
+@router.get("/getProfileByEmail/{email}")
+def get_profile_by_email(email: str):
+    try:
+        data = supabase.table("profiles").select("*").eq("email", email).execute()
+        return data.data
+    except Exception as e:
         return {"error": str(e)}
+
 
 @router.get("/items/{item_id}")
 def read_item(item_id: int, q: str | None = None):
