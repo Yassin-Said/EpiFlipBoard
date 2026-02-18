@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:epiflipboard/pages/save_magazine_page.dart';
 import 'package:epiflipboard/models/post.dart';
 import 'package:epiflipboard/models/article.dart';
 import 'package:epiflipboard/models/topic_categorie.dart';
@@ -1114,6 +1115,12 @@ String extractDomain(String url) {
                         Icons.add,
                         post.flips.toString(),
                         onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => SelectMagazinePage(addedPost: post),
+                            ),
+                          );
                           debugPrint("FLIP → ${post.title}");
                         },
                       ),
