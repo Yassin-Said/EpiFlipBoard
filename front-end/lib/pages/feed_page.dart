@@ -1102,7 +1102,7 @@ class _FlipPostCardState extends State<FlipPostCard> {
                             MaterialPageRoute(
                               builder: (_) => SelectMagazinePage(addedPost: post),
                             ),
-                          );
+                          );}
                         ),
                         const Spacer(),
                         IconButton(
