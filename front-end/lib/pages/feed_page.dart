@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:epiflipboard/pages/save_magazine_page.dart';
 import 'package:epiflipboard/models/post.dart';
 import 'package:epiflipboard/models/article.dart';
 import 'package:epiflipboard/models/topic_categorie.dart';
@@ -1095,7 +1096,14 @@ class _FlipPostCardState extends State<FlipPostCard> {
                         const SizedBox(width: 30),
                         _buildActionButton("", Icons.comment_outlined, post.comments.toString(), onTap: () {}),
                         const SizedBox(width: 30),
-                        _buildActionButton("", Icons.add, post.flips.toString(), onTap: () {}),
+                        _buildActionButton("", Icons.add, post.flips.toString(), onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => SelectMagazinePage(addedPost: post),
+                            ),
+                          );
+                        ),
                         const Spacer(),
                         IconButton(
                           icon: const Icon(Icons.share_outlined, color: Colors.white70),
