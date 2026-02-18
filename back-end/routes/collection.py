@@ -37,7 +37,7 @@ def get_profile_collection(author_id: str):
 def create_collection(collection: CollectionCreate):
     try:
         data = supabase.table("collection").insert({
-            "post_id": collection.author_id,
+            "post_id": collection.post_id,
             "profile_collection_id": collection.collection_id
         }).execute()
         return {"success": True, "data": data.data}
