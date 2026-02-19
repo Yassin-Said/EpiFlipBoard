@@ -11,6 +11,10 @@ class PostCreate(BaseModel):
     description: str
     image: float
 
+class PostLike(BaseModel):
+    post_id: str
+    user_id: str
+
 class ProfileCreate(BaseModel):
     # id: str
     username: str
@@ -278,3 +282,47 @@ def get_profile_by_token(token_oauth: str):
             return {"success": False, "message": "Profile not found"}
     except Exception as e:
         return {"success": False, "error": str(e)}
+    
+@router.post("/addPostLike")
+def add_post_like(params: PostLike):
+    try:
+        post_id = params.post_id
+        user_id = params.user_id
+
+        if not post_id or not user_id:
+            return {
+                "success": False,
+                "error": "post_id and user_id are required"
+            }
+
+        existing = (
+            supabase
+            .table("post_liked")
+            .select("*")
+            .eq("post_id", post_id)
+            .eq("profile_id", user_id)
+            .limit(1)
+            .execute()
+        )
+
+        if existing.data:
+            return {
+                "success": True,
+                "message": "Post already liked"
+            }
+
+        supabase.table("post_liked").insert({
+            "post_id": post_id,
+            "profile_id": user_id
+        }).execute()
+
+        return {
+            "success": True,
+            "message": "Like added successfully"
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
