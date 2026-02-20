@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../tools/icon_button.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'profile/history_page.dart';
@@ -7,6 +6,10 @@ import 'profile/find_people_page.dart';
 import 'profile/settings_page.dart';
 import 'profile/share_profile_page.dart';
 import 'global.dart' as global;
+import 'package:epiflipboard/models/post.dart';
+import 'package:epiflipboard/models/magazines_model.dart';
+import 'package:epiflipboard/pages/create_magazine_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -17,8 +20,36 @@ class ProfilePage extends StatelessWidget {
       backgroundColor: Colors.black,
       body: const LoggedInProfile(),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          print("Créer un magazine");
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CreateMagazinePage()),
+          );
+
+          if (result != null) {
+            final postResponse = await http.post(
+              Uri.parse('https://epiflipboard-iau1.onrender.com/createProfileCollection'),
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: jsonEncode({
+                "author_id": global.globalUserId,
+                "title": result["title"],
+              }),
+            );
+
+            if (postResponse.statusCode == 200) {
+              final decodedPost = jsonDecode(postResponse.body);
+              if (decodedPost['success'] == true) {
+                final magData = decodedPost['data'][0];
+                var newMag = Magazine(
+                  id: magData['id'],
+                  title: result["title"],
+                );
+                global.magazineClass.addMagazine(newMag);
+              }
+            }
+          }
         },
         backgroundColor: Colors.red,
         child: const Icon(Icons.add, color: Colors.white, size: 30),
@@ -101,6 +132,22 @@ class _LoggedInProfileState extends State<LoggedInProfile> {
       }
     } catch (e) {
       debugPrint("❌ Erreur fetchProfile: $e");
+    }
+  }
+
+  Future<void> _deleteMagazine(String magazineId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse("https://epiflipboard-iau1.onrender.com/deleteProfileCollection/$magazineId"),
+      );
+
+      if (response.statusCode == 200) {
+        global.magazineClass.deleteMagazine(magazineId);
+      } else {
+        debugPrint("Delete error: ${response.body}");
+      }
+    } catch (e) {
+      debugPrint("Delete exception: $e");
     }
   }
 
@@ -199,15 +246,300 @@ class _LoggedInProfileState extends State<LoggedInProfile> {
 
             const SizedBox(height: 40),
 
-            // Zone vide pour le contenu futur (magazines, etc.)
-            Expanded(
-              child: Container(
-                // futur contenu
-              ),
-            ),
+            AnimatedBuilder(
+              animation: global.magazineClass,
+              builder: (context, _) {
+                return Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final double itemSize = constraints.maxWidth / 2;
+
+                      return GridView.builder(
+                        itemCount: global.magazineClass.magazines.length,
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 1,
+                        ),
+                        itemBuilder: (context, index) {
+                          final mag = global.magazineClass.magazines[index];
+                          final bool hasImage = mag.posts.isNotEmpty;
+
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => MagazinePostsPage(magazine: mag),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              width: itemSize,
+                              height: itemSize,
+                              margin: const EdgeInsets.all(2),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  hasImage
+                                      ? Image.network(mag.posts.first.imageUrl, fit: BoxFit.cover)
+                                      : Container(color: Colors.red),
+                                  Container(color: Colors.black.withOpacity(0.35)),
+                                  Positioned(
+                                    top: 4,
+                                    right: 4,
+                                    child: PopupMenuButton<String>(
+                                      icon: const Icon(Icons.more_vert, color: Colors.white),
+                                      color: Colors.grey[900],
+                                      onSelected: (value) {
+                                        if (value == "delete") {
+                                          _deleteMagazine(mag.id);
+                                        }
+                                      },
+                                      itemBuilder: (context) => [
+                                        const PopupMenuItem(
+                                          value: "delete",
+                                          child: Text(
+                                            "Delete magazine",
+                                            style: TextStyle(color: Colors.red),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Align(
+                                    alignment: Alignment.bottomLeft,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8),
+                                      child: Text(
+                                        mag.title,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                );
+              },
+            )
           ],
         ),
       ),
     );
+  }
+}
+
+class MagazinePostsPage extends StatefulWidget {
+  final Magazine magazine;
+
+  const MagazinePostsPage({super.key, required this.magazine});
+
+  @override
+  State<MagazinePostsPage> createState() => _MagazinePostsPageState();
+}
+
+class _MagazinePostsPageState extends State<MagazinePostsPage> {
+
+  Future<void> _openUrl(BuildContext context, String url) async {
+    try {
+      final uri = Uri.parse(url);
+
+      final launched = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!launched && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Cannot open link: $url"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deletePostFromMagazine(String postId, String profile_collection_id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse("https://epiflipboard-iau1.onrender.com/deleteCollection"),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: jsonEncode({
+            "post_id": postId,
+            "profile_collection_id": profile_collection_id,
+          }),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          widget.magazine.posts.removeWhere((p) => p.id == postId);
+        });
+        global.magazineClass.deletePost(profile_collection_id, postId);
+      } else {
+        debugPrint("Delete error: ${response.body}");
+      }
+    } catch (e) {
+      debugPrint("Delete exception: $e");
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        title: Text(widget.magazine.title),
+        backgroundColor: Colors.black,
+      ),
+      body: _buildArticlesList(),
+    );
+  }
+
+  Widget _buildArticlesList() {
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: widget.magazine.posts.length,
+      separatorBuilder: (context, index) => Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        height: 1,
+        color: Colors.grey[900],
+      ),
+      itemBuilder: (context, index) {
+        final post = widget.magazine.posts[index];
+        return _buildArticleItem(context, post);
+      },
+    );
+  }
+
+  Widget _buildArticleItem(BuildContext context, DetailedPost post) {
+    return GestureDetector(
+      onTap: () => _openUrl(context, post.source),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        color: Colors.black,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              child: Stack(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey[900],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Image.network(
+                      post.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) {
+                        return Container(
+                          color: Colors.grey[800],
+                          child: const Icon(Icons.broken_image, color: Colors.white30, size: 60),
+                        );
+                      },
+                    ),
+                  ),
+
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert, color: Colors.white),
+                      color: Colors.grey[900],
+                      onSelected: (value) {
+                        if (value == "delete") {
+                          _deletePostFromMagazine(post.id, widget.magazine.id);
+                        }
+                      },
+                      itemBuilder: (context) => const [
+                        PopupMenuItem(
+                          value: "delete",
+                          child: Text(
+                            "Delete post from magazine",
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            Text(
+              post.title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                height: 1.3,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            if (post.description.isNotEmpty)
+              Text(
+                post.description,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 15,
+                  height: 1.4,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+
+            const SizedBox(height: 16),
+
+            Text(
+              _extractDomain(post.source),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  String _extractDomain(String url) {
+    try {
+      final uri = Uri.parse(url);
+      return uri.host.replaceFirst('www.', '');
+    } catch (_) {
+      return url;
+    }
   }
 }

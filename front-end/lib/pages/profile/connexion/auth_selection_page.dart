@@ -1,10 +1,11 @@
+import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:epiflipboard/pages/profile/connexion/email_auth_page.dart';
+import 'package:epiflipboard/models/magazines_loader.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../global.dart' as globals;
-
 
 class AuthSelectionPage extends StatefulWidget {
   const AuthSelectionPage({super.key});
@@ -15,6 +16,33 @@ class AuthSelectionPage extends StatefulWidget {
 
 class _AuthSelectionPageState extends State<AuthSelectionPage> {
   bool isSignUp = true;
+
+  Future<bool> checkProfile(String email) async {
+    try {
+      final Uri url = Uri.parse(
+        "https://epiflipboard-iau1.onrender.com/getProfileByEmail/${email}"
+      );
+
+      final response = await http.get(url,);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data != null && data.isNotEmpty) {
+          globals.globalUserId = data[0]['id']; 
+        }
+        globals.magazineClass.setMagazines(
+            await MagazineService.fetchPosts(
+              MagazineService.fetchMagazines(),
+            ));
+        return data != null && data.isNotEmpty;
+      } else {
+        debugPrint("❌ Erreur API: ${response.statusCode}");
+        return false;
+      }
+    } catch (e) {
+      debugPrint("❌ ACCOUNT CHECK ERROR: $e");
+      return false;
+    }
+  }
 
   Future<void> _googleOAuth(BuildContext context) async {
     try {
@@ -28,10 +56,6 @@ class _AuthSelectionPageState extends State<AuthSelectionPage> {
       final GoogleSignInAuthentication auth = await user.authentication;
 
       debugPrint("✅ GOOGLE LOGIN SUCCESS");
-
-      debugPrint("Name: ${user.displayName}");
-      debugPrint("Email: ${user.email}");
-      debugPrint("Photo: ${user.photoUrl}");
 
       globals.globalTokenOauth = auth.accessToken ?? "";
       globals.globalUsername = user.displayName ?? "NoName";
@@ -47,40 +71,32 @@ class _AuthSelectionPageState extends State<AuthSelectionPage> {
       final String bio = "Hello";
       final int roleId = 1;
       final String tokenOauth = auth.accessToken ?? "";
+      print("##########################################");
+      if (checkProfile(user.email) == false) {
+      print("##########################################ENTERED");
+        final Uri url = Uri.parse("https://epiflipboard-iau1.onrender.com/createProfile");
+        final response = await http.post(
+          url,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "username": username,
+            "avatar_url": avatarUrl,
+            "bio": bio,
+            "role_id": roleId,
+            "token_oauth": tokenOauth,
+          }),
+        );
 
-      final Uri url = Uri.parse("https://epiflipboard-iau1.onrender.com/createProfile");
-      final response = await http.post(
-        url,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "username": username,
-          "avatar_url": avatarUrl,
-          "bio": bio,
-          "role_id": roleId,
-          "token_oauth": tokenOauth,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        debugPrint("✅ Profile créé: $data");
-      } else {
-        debugPrint("❌ Erreur API: ${response.statusCode}");
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          debugPrint("✅ Profile créé: $data");
+        } else {
+          debugPrint("❌ Erreur API: ${response.statusCode}");
+        }
       }
-
 
       Navigator.pushReplacementNamed(context, '/');
 
-      /*
-        👉 ICI tu récupères :
-          - user.displayName
-          - user.email
-          - user.photoUrl
-          - auth.accessToken
-          - auth.idToken
-
-        Tu peux les envoyer vers ton backend plus tard.
-      */
       } catch (e) {
         debugPrint("❌ GOOGLE AUTH ERROR: $e");
       }

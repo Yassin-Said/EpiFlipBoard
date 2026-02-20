@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:epiflipboard/pages/save_magazine_page.dart';
 import 'package:epiflipboard/models/post.dart';
 import 'package:epiflipboard/models/article.dart';
 import 'package:epiflipboard/models/topic_categorie.dart';
@@ -6,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:math';
+import 'global.dart' as global;
 
 class ForYouPage extends StatefulWidget {
   final Map<String, List<FeaturedArticle>>? featuredByCategory;
@@ -467,7 +469,7 @@ class _ForYouPageState extends State<ForYouPage> {
           if (!_isLoadingMore && _hasMore && index >= posts.length - 2) {
             _loadMorePosts();
           }
-          return _FlipPostCard(
+          return FlipPostCard(
             post: posts[index],
             currentIndex: index,
             currentPage: _currentPageValue,
@@ -878,7 +880,7 @@ class _DetailedPostsViewState extends State<DetailedPostsView> {
           scrollDirection: Axis.vertical,
           itemCount: widget.posts.length,
           itemBuilder: (context, index) {
-            return _FlipPostCard(
+            return FlipPostCard(
               post: widget.posts[index],
               currentIndex: index,
               currentPage: _currentPage,
@@ -890,34 +892,88 @@ class _DetailedPostsViewState extends State<DetailedPostsView> {
   }
 }
 
-// ============================================
-// CARTE DE POST AVEC EFFET FLIP
-// ============================================
-class _FlipPostCard extends StatelessWidget {
+class FlipPostCard extends StatefulWidget {
   final DetailedPost post;
   final int currentIndex;
   final double currentPage;
 
-  const _FlipPostCard({
+  const FlipPostCard({
+    super.key,
     required this.post,
     required this.currentIndex,
     required this.currentPage,
   });
 
+  @override
+  State<FlipPostCard> createState() => _FlipPostCardState();
+}
+
+class _FlipPostCardState extends State<FlipPostCard> {
+  late int _likes;
+  bool _liked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _likes = widget.post.likes;
+  }
+
   Future<void> openLink(String url) async {
     final uri = Uri.parse(url);
-
-    if (!await launchUrl(
-      uri,
-      mode: LaunchMode.externalApplication,
-    )) {
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       throw Exception('Impossible d’ouvrir le lien');
+    }
+  }
+
+
+  Future<void> _sendLikeToApi() async {
+    final url = Uri.parse("https://epiflipboard-iau1.onrender.com/addPostLike");
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "post_id": widget.post.id,
+          "user_id": global.globalUserId,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        debugPrint("Error API like: ${response.body}");
+      }
+    } catch (e) {
+      debugPrint("Error like: $e");
+    }
+  }
+
+  void _toggleLike() {
+    setState(()  {
+      if (_liked) {
+        _likes--;
+      } else {
+        _likes++;
+      }
+      _liked = !_liked;
+    });
+  _sendLikeToApi();
+    debugPrint("LIKE → ${widget.post.title} = $_likes");
+  }
+
+  String extractDomain(String url) {
+    try {
+      final uri = Uri.parse(url);
+      return uri.host.replaceFirst('www.', '');
+    } catch (_) {
+      return url;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final double diff = (currentPage - currentIndex);
+    final double diff = (widget.currentPage - widget.currentIndex);
     final double angle = diff.clamp(-1.0, 1.0);
 
     return Transform(
@@ -925,214 +981,168 @@ class _FlipPostCard extends StatelessWidget {
       transform: Matrix4.identity()
         ..setEntry(3, 2, 0.001)
         ..rotateX(-angle * 0.7),
-      child: _buildPostContent(context,
-        onTap: () {
-          openLink(post.source);
-        },),
+      child: _buildPostContent(context, onTap: () {
+        openLink(widget.post.source);
+      }),
     );
   }
 
-String extractDomain(String url) {
-  try {
-    final uri = Uri.parse(url);
-    return uri.host.replaceFirst('www.', '');
-  } catch (_) {
-    return url;
-  }
-}
-
   Widget _buildPostContent(BuildContext context, {required VoidCallback onTap}) {
-  return GestureDetector(
-    behavior: HitTestBehavior.opaque,
-    onTap: onTap,
-    child: Container(
-      color: Colors.black,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (post.imageUrl != null)
-            Image.network(
-              post.imageUrl!,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
+    final post = widget.post;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Container(
+        color: Colors.black,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (post.imageUrl != null && post.imageUrl!.isNotEmpty)
+              Image.network(
+                post.imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
                   color: Colors.grey[900],
                   child: const Icon(Icons.broken_image, color: Colors.white30, size: 80),
-                );
-              },
-            ),
-
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  Colors.black.withOpacity(0.3),
-                  Colors.black.withOpacity(0.8),
-                  Colors.black,
-                ],
-                stops: const [0.0, 0.5, 0.75, 1.0],
+                ),
               ),
-            ),
-          ),
 
-          Positioned(
-            top: 20,
-            left: 20,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            Container(
               decoration: BoxDecoration(
-                color: Colors.red,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                "# ${post.category}",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withOpacity(0.3),
+                    Colors.black.withOpacity(0.8),
+                    Colors.black,
+                  ],
+                  stops: const [0.0, 0.5, 0.75, 1.0],
                 ),
               ),
             ),
-          ),
 
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    post.title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      height: 1.2,
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
+            Positioned(
+              top: 20,
+              left: 20,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  "# ${post.category}",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    extractDomain(post.source),
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    post.description,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 15,
-                      height: 1.4,
-                    ),
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 16,
-                        backgroundColor: Colors.purple,
-                        backgroundImage: (post.authorUrl != null && post.authorUrl!.isNotEmpty)
-                            ? NetworkImage(post.authorUrl!)
-                            : null,
-                        child: (post.authorUrl == null || post.authorUrl!.isEmpty)
-                            ? Text(
-                                post.authorName?.substring(0, 1).toUpperCase() ?? "F",
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              )
-                            : null,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              post.authorName ?? "Flipboard",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            // const Text(
-                            //   "flipped into MIND SHIFT",
-                            //   style: TextStyle(
-                            //     color: Colors.white60,
-                            //     fontSize: 12,
-                            //   ),
-                            // ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.more_vert, color: Colors.white70),
-                        onPressed: () {},
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      _buildActionButton(
-                        "Like",
-                        Icons.favorite_border,
-                        post.likes.toString(),
-                        onTap: () {
-                          post.likes += 1;
-                          debugPrint("LIKE → ${post.title}");
-                        },
-                      ),
-                      const SizedBox(width: 30),
-                      _buildActionButton(
-                        "",
-                        Icons.comment_outlined,
-                        post.comments.toString(),
-                        onTap: () {
-                          debugPrint("COMMENT → ${post.title}");
-                        },
-                      ),
-                      const SizedBox(width: 30),
-                      _buildActionButton(
-                        "",
-                        Icons.add,
-                        post.flips.toString(),
-                        onTap: () {
-                          debugPrint("FLIP → ${post.title}");
-                        },
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        icon: const Icon(Icons.share_outlined, color: Colors.white70),
-                        onPressed: () {
-                          debugPrint("SHARE → ${post.title}");
-                        },
-                      ),
-                    ],
-                  )
-                ],
+                ),
               ),
             ),
-          ),
-        ],
+
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      post.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        height: 1.2,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      extractDomain(post.source),
+                      style: const TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      post.description,
+                      style: const TextStyle(color: Colors.white70, fontSize: 15, height: 1.4),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 20),
+
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundColor: Colors.purple,
+                          backgroundImage: (post.authorUrl != null && post.authorUrl!.isNotEmpty)
+                              ? NetworkImage(post.authorUrl!)
+                              : null,
+                          child: (post.authorUrl == null || post.authorUrl!.isEmpty)
+                              ? Text(
+                                  post.authorName?.substring(0, 1).toUpperCase() ?? "F",
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            post.authorName ?? "Flipboard",
+                            style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.more_vert, color: Colors.white70),
+                          onPressed: () {},
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    Row(
+                      children: [
+                        _buildActionButton(
+                          "Like",
+                          _liked ? Icons.favorite : Icons.favorite_border,
+                          _likes.toString(),
+                          onTap: _toggleLike,
+                        ),
+                        const SizedBox(width: 30),
+                        _buildActionButton("", Icons.comment_outlined, post.comments.toString(), onTap: () {}),
+                        const SizedBox(width: 30),
+                        _buildActionButton("", Icons.add, post.flips.toString(), onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => SelectMagazinePage(addedPost: post),
+                            ),
+                          );}
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.share_outlined, color: Colors.white70),
+                          onPressed: () {},
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-    )
     );
   }
 
@@ -1142,12 +1152,8 @@ String extractDomain(String url) {
     String count, {
     required VoidCallback onTap,
   }) {
-    var _color;
-    if (name == "Like") {
-      _color = Colors.red;
-    } else {
-      _color = Colors.white;
-    }
+    final color = name == "Like" ? Colors.red : Colors.white;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
@@ -1155,12 +1161,9 @@ String extractDomain(String url) {
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
         child: Row(
           children: [
-            Icon(icon, color: _color, size: 22),
+            Icon(icon, color: color, size: 22),
             const SizedBox(width: 6),
-            Text(
-              count,
-              style: const TextStyle(color: Colors.white70, fontSize: 14),
-            ),
+            Text(count, style: const TextStyle(color: Colors.white70, fontSize: 14)),
           ],
         ),
       ),

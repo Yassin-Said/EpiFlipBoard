@@ -8,7 +8,7 @@ class DetailedPost {
   final String source;
   final String category;
   final String timeAgo;
-  final String? imageUrl;
+  final String imageUrl;
   final String? authorUrl;
   final String description;
   int likes;
@@ -22,7 +22,7 @@ class DetailedPost {
     required this.category,
     required this.timeAgo,
     required this.id,
-    this.imageUrl,
+    required this.imageUrl,
     this.authorUrl,
     required this.description,
     this.likes = 0,

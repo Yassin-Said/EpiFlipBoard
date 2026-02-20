@@ -11,6 +11,10 @@ class PostCreate(BaseModel):
     description: str
     image: float
 
+class PostLike(BaseModel):
+    post_id: str
+    user_id: str
+
 class ProfileCreate(BaseModel):
     # id: str
     username: str
@@ -26,6 +30,44 @@ def get_posts_by_author_id(author_id: str):
         return data.data
     except Exception as e:
         return {"error": str(e)}
+
+@router.get("/getPostsById/{id}")
+def get_all_posts(id: str):
+    try:
+        data = (
+            supabase
+            .table("posts")
+            .select("""
+                id,
+                title,
+                summary,
+                image_url,
+                link,
+                tags,
+                created_at,
+                updated_at,
+                author_id,
+
+                profiles:author_id (
+                    id,
+                    username,
+                    avatar_url
+                )
+            """)
+            .eq("id", id)
+            .order("created_at", desc=True)
+            .execute()
+        )
+
+        return {
+            "success": True,
+            "posts": data.data
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
 
 @router.get("/allPosts")
 def get_all_posts():
@@ -240,3 +282,47 @@ def get_profile_by_token(token_oauth: str):
             return {"success": False, "message": "Profile not found"}
     except Exception as e:
         return {"success": False, "error": str(e)}
+    
+@router.post("/addPostLike")
+def add_post_like(params: PostLike):
+    try:
+        post_id = params.post_id
+        user_id = params.user_id
+
+        if not post_id or not user_id:
+            return {
+                "success": False,
+                "error": "post_id and user_id are required"
+            }
+
+        existing = (
+            supabase
+            .table("post_liked")
+            .select("*")
+            .eq("post_id", post_id)
+            .eq("profile_id", user_id)
+            .limit(1)
+            .execute()
+        )
+
+        if existing.data:
+            return {
+                "success": True,
+                "message": "Post already liked"
+            }
+
+        supabase.table("post_liked").insert({
+            "post_id": post_id,
+            "profile_id": user_id
+        }).execute()
+
+        return {
+            "success": True,
+            "message": "Like added successfully"
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
