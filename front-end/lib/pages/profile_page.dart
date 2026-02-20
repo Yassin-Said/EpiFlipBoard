@@ -106,7 +106,6 @@ class _LoggedInProfileState extends State<LoggedInProfile> {
     fetchProfile();
   }
 
-
   Future<void> fetchProfile() async {
     try {
       final Uri url = Uri.parse(
@@ -133,6 +132,22 @@ class _LoggedInProfileState extends State<LoggedInProfile> {
       }
     } catch (e) {
       debugPrint("❌ Erreur fetchProfile: $e");
+    }
+  }
+
+  Future<void> _deleteMagazine(String magazineId) async {
+    try {
+      final response = await http.delete(
+        Uri.parse("https://epiflipboard-iau1.onrender.com/deleteProfileCollection/$magazineId"),
+      );
+
+      if (response.statusCode == 200) {
+        global.magazineClass.deleteMagazine(magazineId);
+      } else {
+        debugPrint("Delete error: ${response.body}");
+      }
+    } catch (e) {
+      debugPrint("Delete exception: $e");
     }
   }
 
@@ -269,6 +284,28 @@ class _LoggedInProfileState extends State<LoggedInProfile> {
                                       ? Image.network(mag.posts.first.imageUrl, fit: BoxFit.cover)
                                       : Container(color: Colors.red),
                                   Container(color: Colors.black.withOpacity(0.35)),
+                                  Positioned(
+                                    top: 4,
+                                    right: 4,
+                                    child: PopupMenuButton<String>(
+                                      icon: const Icon(Icons.more_vert, color: Colors.white),
+                                      color: Colors.grey[900],
+                                      onSelected: (value) {
+                                        if (value == "delete") {
+                                          _deleteMagazine(mag.id);
+                                        }
+                                      },
+                                      itemBuilder: (context) => [
+                                        const PopupMenuItem(
+                                          value: "delete",
+                                          child: Text(
+                                            "Delete magazine",
+                                            style: TextStyle(color: Colors.red),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                   Align(
                                     alignment: Alignment.bottomLeft,
                                     child: Padding(
@@ -301,11 +338,16 @@ class _LoggedInProfileState extends State<LoggedInProfile> {
   }
 }
 
-class MagazinePostsPage extends StatelessWidget {
+class MagazinePostsPage extends StatefulWidget {
   final Magazine magazine;
 
   const MagazinePostsPage({super.key, required this.magazine});
 
+  @override
+  State<MagazinePostsPage> createState() => _MagazinePostsPageState();
+}
+
+class _MagazinePostsPageState extends State<MagazinePostsPage> {
 
   Future<void> _openUrl(BuildContext context, String url) async {
     try {
@@ -336,13 +378,38 @@ class MagazinePostsPage extends StatelessWidget {
     }
   }
 
+  Future<void> _deletePostFromMagazine(String postId, String profile_collection_id) async {
+    try {
+      final response = await http.delete(
+        Uri.parse("https://epiflipboard-iau1.onrender.com/deleteCollection"),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: jsonEncode({
+            "post_id": postId,
+            "profile_collection_id": profile_collection_id,
+          }),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          widget.magazine.posts.removeWhere((p) => p.id == postId);
+        });
+        global.magazineClass.deletePost(profile_collection_id, postId);
+      } else {
+        debugPrint("Delete error: ${response.body}");
+      }
+    } catch (e) {
+      debugPrint("Delete exception: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text(magazine.title),
+        title: Text(widget.magazine.title),
         backgroundColor: Colors.black,
       ),
       body: _buildArticlesList(),
@@ -352,14 +419,14 @@ class MagazinePostsPage extends StatelessWidget {
   Widget _buildArticlesList() {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: magazine.posts.length,
+      itemCount: widget.magazine.posts.length,
       separatorBuilder: (context, index) => Container(
         margin: const EdgeInsets.symmetric(vertical: 8),
         height: 1,
         color: Colors.grey[900],
       ),
       itemBuilder: (context, index) {
-        final post = magazine.posts[index];
+        final post = widget.magazine.posts[index];
         return _buildArticleItem(context, post);
       },
     );
@@ -374,26 +441,55 @@ class MagazinePostsPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-              Container(
-                width: double.infinity,
-                height: 200,
-                margin: const EdgeInsets.only(bottom: 16),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  color: Colors.grey[900],
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Image.network(
-                  post.imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) {
-                    return Container(
-                      color: Colors.grey[800],
-                      child: const Icon(Icons.broken_image, color: Colors.white30, size: 60),
-                    );
-                  },
-                ),
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              child: Stack(
+                children: [
+                  Container(
+                    width: double.infinity,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey[900],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Image.network(
+                      post.imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) {
+                        return Container(
+                          color: Colors.grey[800],
+                          child: const Icon(Icons.broken_image, color: Colors.white30, size: 60),
+                        );
+                      },
+                    ),
+                  ),
+
+                  Positioned(
+                    top: 4,
+                    right: 4,
+                    child: PopupMenuButton<String>(
+                      icon: const Icon(Icons.more_vert, color: Colors.white),
+                      color: Colors.grey[900],
+                      onSelected: (value) {
+                        if (value == "delete") {
+                          _deletePostFromMagazine(post.id, widget.magazine.id);
+                        }
+                      },
+                      itemBuilder: (context) => const [
+                        PopupMenuItem(
+                          value: "delete",
+                          child: Text(
+                            "Delete post from magazine",
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
+            ),
 
             Text(
               post.title,

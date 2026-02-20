@@ -26,10 +26,32 @@ class GlobalMagazine extends ChangeNotifier {
     magazines.add(newMags);
     notifyListeners();
   }
-    void addPost(String id, DetailedPost newPost) {
+  void addPost(String id, DetailedPost newPost) {
     for (var item in magazines) {
       if (item.id == id) {
         item.posts.add(newPost);
+        notifyListeners();
+        return;
+      }
+    }
+  }
+  void deletePost(String id, String postId) {
+    for (var item in magazines) {
+      if (item.id == id) {
+        for (var post in item.posts) {
+          if (post.id == postId) {
+            item.posts.remove(post);
+            notifyListeners();
+            return;
+          }
+        }
+      }
+    }
+  }
+  void deleteMagazine(String magsId) {
+    for (var item in magazines) {
+      if (item.id == magsId) {
+        magazines.remove(item);
         notifyListeners();
         return;
       }
