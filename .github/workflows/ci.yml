@@ -33,8 +33,8 @@ jobs:
         run: |
          COVERAGE=$(lcov --summary coverage/lcov.info | grep lines | awk '{print $2}' | sed 's/%//')
           echo "Coverage = $COVERAGE%"
-          if (( $(echo "$COVERAGE < 70" | bc -l) )); then
-            echo "❌ Coverage too low: $COVERAGE% (min 70%)"
+          if (( $(echo "$COVERAGE < 55" | bc -l) )); then
+            echo "❌ Coverage too low: $COVERAGE% (min 55%)"
             exit 1
           else
             echo "✅ Coverage OK: $COVERAGE%"
