@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:math';
+import 'global.dart' as global;
 
 class ForYouPage extends StatefulWidget {
   final Map<String, List<FeaturedArticle>>? featuredByCategory;
@@ -924,8 +925,32 @@ class _FlipPostCardState extends State<FlipPostCard> {
     }
   }
 
+
+  Future<void> _sendLikeToApi() async {
+    final url = Uri.parse("https://epiflipboard-iau1.onrender.com/addPostLike");
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "post_id": widget.post.id,
+          "user_id": global.globalUserId,
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        debugPrint("Error API like: ${response.body}");
+      }
+    } catch (e) {
+      debugPrint("Error like: $e");
+    }
+  }
+
   void _toggleLike() {
-    setState(() {
+    setState(()  {
       if (_liked) {
         _likes--;
       } else {
@@ -933,7 +958,7 @@ class _FlipPostCardState extends State<FlipPostCard> {
       }
       _liked = !_liked;
     });
-
+  _sendLikeToApi();
     debugPrint("LIKE → ${widget.post.title} = $_likes");
   }
 
